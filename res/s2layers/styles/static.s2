@@ -1,8 +1,7 @@
 
 layerinfo "type" = "core";
 layerinfo "name" = "Simple Content Page Core";
-layerinfo "pagetypename" = "Simple Content Page";
-layerinfo "majorversion" = 1;
+layerinfo "uniq" = "http://www.webdrove.org/ns/s2layers/page/static";
 
 class Image {
     var string url;

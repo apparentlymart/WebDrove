@@ -5,7 +5,7 @@
 
 layerinfo "type" = "core";
 layerinfo "name" = "WebDrove Main Core";
-layerinfo "majorversion" = 1;
+layerinfo "uniq" = "http://www.webdrove.org/ns/s2layers/site/core";
 
 class Link {
     var string caption;
