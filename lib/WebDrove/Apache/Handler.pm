@@ -41,10 +41,7 @@ sub test_content {
             _type => 'Page',
             site_title => $site->name,
             page_title => 'Home',
-            _page_body => {
-                s2obj => $page->s2_object(),
-                s2ctx => $page->s2_context(),
-            },
+            _page => $page,
         };
 
         $ctx->set_print(sub { print $_[1]; });
@@ -103,9 +100,10 @@ sub Page__print_head {
 sub Page__print_body {
     my ($ctx, $this) = @_;
     
-    my $chictx = $this->{_page_body}->{s2ctx};
-    $chictx->set_print(sub { print $_[1]; });
-    $chictx->run("Page::print()", $this->{_page_body}->{s2obj});
+    my $page = $this->{_page};
+    my $pctx = $page->s2_context();
+    $pctx->set_print(sub { print $_[1]; });
+    $pctx->run("Page::print()", $page->s2_object());
     
 }
 
