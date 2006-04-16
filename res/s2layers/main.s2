@@ -1,0 +1,42 @@
+
+# This is WebDrove's core layer for site styles. It produces the overall page
+# layout but then delegates to an appropriate page style to render the page
+# content.
+
+layerinfo "type" = "core";
+layerinfo "name" = "WebDrove Main Core";
+layerinfo "majorversion" = 1;
+
+class Link {
+    var string caption;
+    var string url;
+    var bool active;
+    var bool current;
+}
+
+class Page {
+    var string site_title;
+    var string page_title;
+    var Link[] nav;
+
+    function print() "Entry point function; called by the system to render a page.";
+    function builtin print_body() "Render the body content of the page.";
+    function builtin print_head() "Produce HTML HEAD content necessary for this page.";
+}
+
+function print_stylesheet() {
+    # Does nothing in core
+}
+
+function Page::print() {
+    "<html><head><title>"+ehtml($.site_title)+" - "+ehtml($.page_title)+"</title>";
+    $this->print_head();
+    println "</head><body>";
+
+    println "<div id='sitetitle'>"+ehtml($.site_title)+"</div>";
+    println "<h1>"+ehtml($.site_title)+"</h1>";
+
+    $this->print_body();
+
+    println "</body></html>";
+}

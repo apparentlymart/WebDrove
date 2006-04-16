@@ -1,0 +1,48 @@
+
+# Through a bit of trickery the functions declared here are available in all
+# layers, whatever core they belong to. This saves duplicating all of this
+# useful stuff in every single layer.
+
+layerinfo "type" = "core";
+layerinfo "name" = "WebDrove Global Builtins";
+layerinfo "majorversion" = 1;
+
+function builtin ehtml(string s) : string;
+
+class int
+"An integer number.  This isn't really a class, as suggested by its lower-case name.  Parameters of type int pass by value, unlike all variables of real object types, which pass by reference.  Instead, this is just a pseudo-class which provides convenience methods on instances of integers.  The other pseudo-class is [class[string]]."
+{
+    function builtin zeropad(int digits) : string
+    "Return the integer as a string formatted at least \$digits characters long, left-padded with zeroes.";
+}
+
+class string
+"A series of characters.  This isn't really a class, as suggested by its lower-case name.  Parameters of type string pass by value, unlike all variables of real object types, which pass by reference.  Instead, this is just a pseudo-class which provides convenience methods on instances of strings.  The other pseudo-class is [class[int]]."
+{
+    function builtin substr(int start, int length) : string
+    "Returns up to \$length characters from string, skipping \$start characters from the beginning.";
+
+    function builtin ends_with (string sub) : bool
+    "Returns true if string ends in \$sub";
+
+    function builtin starts_with (string sub) : bool
+    "Returns true if string begins with \$sub";
+
+    function builtin contains (string sub) : bool
+    "Return true if string contains \$sub";
+
+    function builtin lower : string
+    "Returns string in lower case.";
+
+    function builtin upper : string
+    "Returns string in upper case";
+
+    function builtin upperfirst : string
+    "Return string with the first character capitalized.";
+
+    function builtin length() : int
+    "Return the number of characters in the string.";
+
+    function builtin repeat(int n) : string
+    "Returns the string repeated n times";
+}

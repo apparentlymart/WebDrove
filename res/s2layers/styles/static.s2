@@ -1,0 +1,39 @@
+
+layerinfo "type" = "core";
+layerinfo "name" = "Simple Content Page Core";
+layerinfo "pagetypename" = "Simple Content Page";
+layerinfo "majorversion" = 1;
+
+class Image {
+    var string url;
+    var string alt;
+    var string link_url;
+}
+
+class Page {
+    var string content "The page content as HTML.";
+    var Image{}[] images "An array of images for each image group, keyed by group name.";
+
+    function print() "Generate the page content; called by the system when a page needs to be rendered.";
+
+}
+
+property string{}{} image_groups {
+    "noui" = 1;
+    "des" = "Image group declarations";
+}
+set image_groups = {
+
+# None in core, but for example...
+#    "side" => {
+#        "maxwidth" => "800",
+#        "maxheight" => "800",
+#        "desc" => "Main Column",
+#        "maximages" => "8",
+#    },
+};
+
+function Page::print() {
+    print $.content;
+}
+
