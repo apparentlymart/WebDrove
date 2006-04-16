@@ -4,6 +4,7 @@ package WebDrove::Page;
 use WebDrove;
 use WebDrove::DB;
 use WebDrove::S2;
+use WebDrove::PageType;
 use strict;
 
 sub new {
@@ -22,15 +23,23 @@ sub type {
     return $self->{type} = WebDrove::PageType->fetch($typeid);
 }
 
+sub pageid {
+    return $_[0]->{pageid};
+}
+
 sub style {
     my ($self) = @_;
 
     return $self->{style} if defined $self->{style};
 
     my $styleid = $self->{styleid};
-    my $site = $self->{owner};
+    my $site = $self->owner();
 
     return $self->{style} = WebDrove::S2::Style->fetch($site, $styleid);
+}
+
+sub owner {
+    return $_[0]->{owner};
 }
 
 sub s2_context {
@@ -46,11 +55,12 @@ sub s2_context {
 sub s2_object {
     my ($self) = @_;
     
-    return {
-        '_type' => 'Page',
-        'title' => $self->{title},
-        'content' => '<p>This is not the real body content.</p>',
-    };
+    return $self->{s2obj} if defined $self->{s2obj};
+    
+    my $type = $self->type;
+    my $ctx = $self->s2_context();
+
+    return $self->{s2obj} = $type->construct_s2_object($self, $ctx);
 }
 
 1;
