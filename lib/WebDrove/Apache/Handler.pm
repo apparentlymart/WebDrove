@@ -37,10 +37,22 @@ sub test_content {
         my $sitestyle = $site->style();
         my $ctx = $sitestyle->make_context();
         
+        my $pages = $site->get_pages();
+        my @s2pages = map {
+            {
+                _type => 'Link',
+                caption => $_->{title},
+                url => $_->{url},
+                active => $_->equals($page),
+                current => $_->equals($page),
+            }
+        } @$pages;
+        
         my $s2page = {
             _type => 'Page',
             site_title => $site->name,
             page_title => 'Home',
+            nav => \@s2pages,
             _page => $page,
         };
 

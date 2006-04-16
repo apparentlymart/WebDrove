@@ -27,6 +27,14 @@ sub pageid {
     return $_[0]->{pageid};
 }
 
+sub url {
+    return "/".WebDrove::eurl($_[0]->title)."/";
+}
+
+sub equals {
+    return ($_[0]->pageid eq $_[1]->pageid) && ($_[0]->owner->equals($_[1]->owner));
+}
+
 sub style {
     my ($self) = @_;
 
@@ -36,6 +44,10 @@ sub style {
     my $site = $self->owner();
 
     return $self->{style} = WebDrove::S2::Style->fetch($site, $styleid);
+}
+
+sub title {
+    return $_[0]->{title};
 }
 
 sub owner {

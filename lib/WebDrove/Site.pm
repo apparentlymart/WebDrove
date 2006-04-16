@@ -117,7 +117,7 @@ sub get_pages {
     };
 
     my $sth = $self->db_prepare("SELECT * FROM page WHERE siteid=? ORDER BY sort");
-    $sth->execute();
+    $sth->execute($self->siteid);
     
     my @ret = ();
     while (my $meta = $sth->fetchrow_hashref()) {
@@ -128,5 +128,8 @@ sub get_pages {
     return \@ret;
 }
 
+sub equals {
+    return $_[0]->siteid eq $_[1]->siteid;
+}
 
 1;
