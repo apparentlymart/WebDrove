@@ -47,29 +47,32 @@ sub alloc_system_id {
 # $site->alloc_id, which are wrappers around this function that know the correct $dbh to pass.
 sub alloc_id {
     my ($dbh, $siteid, $area, $recursing) = @_;
-    
+
+    print "Allocating an id for $siteid in $area\n";
+
     $siteid += 0;
     die "No dbh provided" unless $dbh;
 
     # Must make sure that we use the same dbh throughout to get the right id
     my $present = $dbh->do("UPDATE counter SET max=LAST_INSERT_ID(max+1) WHERE siteid=? AND area=?", undef, $siteid, $area);
-    
+
     if ($present) {
-        return $dbh->selectrow_array("SELECT LAST_INSERT_ID()");
+        my $newid = $dbh->selectrow_array("SELECT LAST_INSERT_ID()");
+        return $newid if $newid;
     }
-    
+
     # If we're recursing (see below) and it's not present then something bad has happened. Bail out!
     die "Failed to allocate $area id for site $siteid" if $recursing;
-    
+
     # If we've got this far, then caller is asking for a counter that's never been allocated before.
     # We need to initialize the counter with an appropriate value.
-    
+
     my $lockname = "counteralloc-$siteid-$area";
     my $locked = $dbh->selectrow_array("SELECT GET_LOCK(?,5)", undef, $lockname);
     die "Failed to aquire counter lock for $area in site $siteid" unless $locked;
 
     my $newmax = undef;
-    
+
     if ($area eq 's2style') {
         $newmax = $dbh->selectrow_array("SELECT MAX(styleid) FROM s2style WHERE siteid=?", undef, $siteid);
     }
@@ -82,15 +85,16 @@ sub alloc_id {
     else {
         die "Unknown counter area '$area'";
     }
-    
+    #die "Failed to initialize max value for $area" unless defined($newmax);
+
     # Insert a row describing the max we just found.
     # Another process might beat us to it and allocate first but it doesn't really matter.
-    $dbh->do("INSERT IGNORE INTO counter (siteid, area, max) VALUES (?, ?, ?)", undef, $siteid, $area, $newmax);
-    
+    $dbh->do("INSERT IGNORE INTO counter (siteid, area, max) VALUES (?, ?, ?)", undef, $siteid, $area, $newmax+0);
+
     $dbh->selectrow_array("SELECT RELEASE_LOCK(?)", undef, $lockname);
-    
+
     # Now call this function again recursively to get an id from the newly-defined area
-    return alloc_id($siteid, $area, 1);
+    return alloc_id($dbh, $siteid, $area, 1);
 }
 
 1;

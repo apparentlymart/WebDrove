@@ -32,26 +32,26 @@ sub test_content {
         http_header($r);
 
         my $site = WebDrove::Site->fetch(1);
-        my $page = $site->get_page_by_title("Home");
+        my $page = $site->get_page_by_title("About Me");
 
         my $sitestyle = $site->style();
         my $ctx = $sitestyle->make_context();
-        
+
         my $pages = $site->get_pages();
         my @s2pages = map {
             {
                 _type => 'Link',
-                caption => $_->{title},
-                url => $_->{url},
+                caption => $_->title,
+                url => $_->url,
                 active => $_->equals($page),
                 current => $_->equals($page),
             }
         } @$pages;
-        
+
         my $s2page = {
             _type => 'Page',
             site_title => $site->name,
-            page_title => 'Home',
+            page_title => $page->title,
             nav => \@s2pages,
             _page => $page,
         };
@@ -71,7 +71,7 @@ sub test_content {
 
 sub http_header {
     my ($r) = @_;
-    
+
     return if ($r->notes("webdrove_sent_header"));
     $r->send_http_header();
     $r->notes("webdrove_sent_header", 1);
@@ -83,30 +83,31 @@ sub ehtml {
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
     $s =~ s/"/&quot;/g;#"#
-    $s =~ s/'/&apos;/g;
+    $s =~ s/'/&#39;/g;
     return $s;
 }
 
 sub print_r_p {
     my ($val) = @_;
-    
+
     print "<pre>".ehtml(Data::Dumper::Dumper($val))."</pre>";
 }
 
-package S2::Builtin;
+package WebDrove::S2::Builtin;
 
 sub ehtml {
     my ($ctx, $s) = @_;
     $s =~ s/&/&amp;/g;
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
+    $s =~ s/"/&quot;/g;#"#
     $s =~ s/'/&#39;/g;
     return $s;
 }
 
 sub Page__print_head {
     my ($ctx, $this) = @_;
-    
+
 }
 
 sub Page__print_body {
