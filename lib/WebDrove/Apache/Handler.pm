@@ -99,12 +99,11 @@ sub Page__print_head {
 
 sub Page__print_body {
     my ($ctx, $this) = @_;
-    
+
     my $page = $this->{_page};
     my $pctx = $page->s2_context();
     $pctx->set_print(sub { print $_[1]; });
     $pctx->run("Page::print()", $page->s2_object());
-    
 }
 
 1;
