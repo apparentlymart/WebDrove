@@ -34,9 +34,8 @@ sub test_content {
         my $site = WebDrove::Site->fetch(1);
         my $page = $site->get_page_by_title("Home");
 
-        my $core = $s2->layer_from_file($ENV{WDHOME}.'/local/s2layers/main.pl');
-
-        my $ctx = $s2->make_context($core);
+        my $sitestyle = $site->style();
+        my $ctx = $sitestyle->make_context();
         
         my $s2page = {
             _type => 'Page',

@@ -80,6 +80,14 @@ sub alloc_id {
     
 }
 
+sub style {
+    my ($self) = @_;
+    
+    return $self->{style} if defined $self->{style};
+
+    return $self->{style} = WebDrove::S2::Style->fetch($self, $self->{styleid});
+}
+
 sub get_page {
     my ($self, $pageid) = @_;
     
