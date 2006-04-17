@@ -48,8 +48,6 @@ sub alloc_system_id {
 sub alloc_id {
     my ($dbh, $siteid, $area, $recursing) = @_;
 
-    print "Allocating an id for $siteid in $area\n";
-
     $siteid += 0;
     die "No dbh provided" unless $dbh;
 

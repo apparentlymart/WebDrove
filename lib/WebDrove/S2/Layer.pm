@@ -114,8 +114,6 @@ sub replace_with {
     foreach my $k (qw(name uniq)) {
         next unless defined($layerinfo->{$k});
         $values .= "," if $values;
-        #$values .= sprintf("(%d, %s, %s)", $lid,
-        #                   $dbh->quote($_), $dbh->quote($info{$_}));
         $values .= "(?,?,?,?)";
         push @param, $layerid, $siteid, $k, $layerinfo->{$k};
         $notin .= "," if $notin;
@@ -126,7 +124,6 @@ sub replace_with {
             or die "replace into s2info (values = $values)";
         $db_do->("DELETE FROM s2layerinfo WHERE layerid=? AND infokey NOT IN ($notin)", undef, $layerid);
     }
-    #$db_do->("INSERT INTO s2layerinfo (layerid,siteid,infokey,value) VALUES (?,?,?,?)", $layerid, $siteid, $k, $layerinfo->{$k}) if defined($layerinfo->{$k}) or die("Failed to insert layerinfo $k");
 
 }
 
