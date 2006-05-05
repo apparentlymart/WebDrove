@@ -24,19 +24,85 @@ class Page {
     function builtin print_head() "Produce HTML HEAD content necessary for this page.";
 }
 
+property string text_navigation {
+	noui = 1;
+}
+set text_navigation = "Navigation";
+
 function print_stylesheet() {
     # Does nothing in core
 }
 
 function Page::print() {
-    "<html><head><title>"+ehtml($.site_title)+" - "+ehtml($.page_title)+"</title>";
-    $this->print_head();
-    println "</head><body>";
+"""
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>"""+ehtml($.site_title)+" - "+ehtml($.page_title)+"""</title>""";
+	$this->print_head();
+"""
+</head>
+<body>
+<div id="pagecontainer">
 
-    println "<div id='sitetitle'>"+ehtml($.site_title)+"</div>";
-    println "<h1>"+ehtml($.site_title)+"</h1>";
+<div id="top">
+<div id="sitetitle">"""+ehtml($.site_title)+"""</div>
+<div id="pagetitle">"""+ehtml($.page_title)+"""</div>
 
-    $this->print_body();
+</div>
 
-    println "</body></html>";
+<div id="middle">
+
+<div id="main">
+
+<h1 id="pageheader">"""+ehtml($.page_title)+"""</h1>
+<div id="page">
+<div id="pagecontent">
+<div id="pageinner">
+
+""";
+
+	$this->print_body();
+
+"""
+
+</div>
+</div>
+</div>
+
+<div id="pageend"></div>
+
+</div>
+
+<div id="sidebar">
+<div id="navigation">
+<div id="navbar">
+
+<h2>"""+ehtml($*text_navigation)+"""</h2>
+
+<ul class="toplevellinks">""";
+
+	# IE does stupid stuff if you have any whitespace in a list, so make sure not to introduce any here...
+	foreach var Link l ($.nav) {
+		var string cla = ($l.active ? "active" : "")+($l.active and $l.current ? " " : "")+($l.current ? "current" : "");
+		print "<li class=\"$cla\"><a href=\""+ehtml($l.url)+"\" class=\"$cla\">"+ehtml($l.caption)+"</a></li>";
+	}
+
+"""</ul>
+
+</div>
+</div>
+</div>
+<div id="middleend"></div>
+</div>
+
+<div id="bottom">
+</div>
+
+</div>
+</body>
+</html>
+
+""";
+
 }
