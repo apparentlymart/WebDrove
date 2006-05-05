@@ -6,6 +6,7 @@ use WebDrove;
 use WebDrove::S2;
 use WebDrove::DB;
 use WebDrove::Site;
+use WebDrove::Apache::AdminService;
 use S2::Runtime::OO;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
@@ -19,11 +20,28 @@ sub handler {
     my $r = shift;
 
     $r->handler("perl-script");
-    $r->set_handlers(PerlHandler => [ \&test_content ]);
+    $r->set_handlers(PerlHandler => [ \&response_handler ]);
+
     return OK;
 }
 
-sub test_content {
+sub response_handler {
+    my $r = shift;
+
+    my $dir_mode = $r->dir_config('webdrove_mode');
+
+    if ($dir_mode eq 'passthrough') {
+        return DECLINED;
+    }
+
+    if ($dir_mode eq 'adminservice') {
+        return WebDrove::Apache::AdminService::handler($r);
+    }
+
+    return site_content($r);
+}
+
+sub site_content {
     my $r = shift;
 
     eval {
