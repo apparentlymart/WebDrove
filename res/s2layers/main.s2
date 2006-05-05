@@ -106,3 +106,7 @@ function Page::print() {
 """;
 
 }
+
+function main_stylesheet() {
+	# Does absolutely nothing in core
+}

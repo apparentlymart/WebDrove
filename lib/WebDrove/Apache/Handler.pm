@@ -126,6 +126,10 @@ sub ehtml {
 sub Page__print_head {
     my ($ctx, $this) = @_;
 
+    $ctx->_print("<style type=\"text/css\">\n");
+    $ctx->run("main_stylesheet()");
+    $ctx->_print("</style>\n");
+
 }
 
 sub Page__print_body {
