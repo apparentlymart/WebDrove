@@ -2,6 +2,7 @@
 package WebDrove::Apache::Handler;
 
 use strict;
+use Apache::Debug;
 use WebDrove;
 use WebDrove::S2;
 use WebDrove::DB;
@@ -11,6 +12,19 @@ use S2::Runtime::OO;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
+
+$SIG{__DIE__} = sub {
+    my $r = Apache->request;
+    my @err = shift;
+
+    $r->status_line("500 System Error");
+    $r->content_type("text/html");
+    http_header($r);
+    print "<h1>System Error</h1>\n";
+    print "<p>".ehtml(join('',@err))."</p><div style='display:none'>\n";
+
+    return 200;
+};
 
 use Data::Dumper;
 

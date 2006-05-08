@@ -5,7 +5,8 @@ use strict;
 use WebDrove;
 use WebDrove::S2;
 use WebDrove::DB;
-use WebDrove::Site;
+use WebDrove::Apache::Handler;
+use WebDrove::Apache::AdminService::Sites;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
@@ -28,7 +29,7 @@ sub handler {
     shift @remaining_bits unless defined $remaining_bits[0];
 
     my $handler = {
-        'sites' => \&sites_service,
+        'sites' => \&WebDrove::Apache::AdminService::Sites::service_handler,
     }->{$pathbits[0]};
 
     return $handler ? $handler->($r, \@remaining_bits) : not_found($r);
@@ -48,39 +49,7 @@ sub root_service {
 
 }
 
-sub sites_service {
-    my ($r, $pathbits) = @_;
 
-    my %get = $r->args;
-
-    if (scalar(@$pathbits) == 0) {
-        # Doing site discovery
-        my $siteid = $get{siteid}+0;
-        if ($siteid && WebDrove::Site->fetch($siteid)) {
-            return redir($r, "/sites/".$siteid);
-        }
-        else {
-            return not_found($r);
-        }
-    }
-
-    if (scalar(@$pathbits) == 1) {
-        my $siteid = $pathbits->[0];
-
-        my $site = WebDrove::Site->fetch($siteid);
-
-        return not_found($r) unless $site;
-
-        return xml($r,
-            Elem("site",
-                Elem("name" => $site->name),
-            )
-        );
-
-    }
-
-    return not_found($r);
-}
 
 # Utility Functions
 
