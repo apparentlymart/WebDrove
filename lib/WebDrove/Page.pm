@@ -15,11 +15,11 @@ sub new {
 
 sub type {
     my ($self) = @_;
-    
+
     return $self->{type} if defined $self->{type};
-    
+
     my $typeid = $self->{typeid};
-    
+
     return $self->{type} = WebDrove::PageType->fetch($typeid);
 }
 
@@ -56,19 +56,19 @@ sub owner {
 
 sub s2_context {
     my ($self) = @_;
-    
+
     return $self->{s2ctx} if defined $self->{s2ctx};
-    
+
     my $style = $self->style;
-    
+
     return $self->{s2ctx} = $style->make_context();
 }
 
 sub s2_object {
     my ($self) = @_;
-    
+
     return $self->{s2obj} if defined $self->{s2obj};
-    
+
     my $type = $self->type;
     my $ctx = $self->s2_context();
 

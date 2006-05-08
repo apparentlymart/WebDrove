@@ -39,7 +39,7 @@ sub handle_restart {
 PerlInitHandler WebDrove::Apache::Handler
 #PerlFixupHandler Apache::CompressClientFixup
 
-    
+
     });
 
     eval { handle_restart_local(); };
