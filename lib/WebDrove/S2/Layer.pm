@@ -6,14 +6,20 @@ use WebDrove;
 use WebDrove::S2;
 use WebDrove::DB;
 use Storable;
+use Carp;
 
 sub fetch {
     my ($class, $site, $layerid) = @_;
+
+	croak("A layerid must be specified") unless $layerid;
 
     my $self = {
         'site' => $site,
         'layerid' => $layerid,
         's2layer' => undef,
+        'layerinfo' => undef,
+        'parentlayer' => undef,
+        'type' => undef,
     };
 
     return bless $self, $class;
@@ -125,6 +131,92 @@ sub replace_with {
         $db_do->("DELETE FROM s2layerinfo WHERE layerid=? AND infokey NOT IN ($notin)", undef, $layerid);
     }
 
+}
+
+sub _load_meta {
+	my ($self) = @_;
+
+	return if (defined $self->{type} && defined $self->{parent});
+
+	my $site = $self->owner;
+	my $layerid = $self->layerid;
+
+	my $sth;
+	if ($site) {
+	    $sth = $site->db_prepare("SELECT parentid, parentsiteid, type FROM s2layer WHERE siteid=? AND layerid=?");
+	}
+	else {
+	    my $db = WebDrove::DB::get_db_reader();
+	    $sth = $db->prepare("SELECT parentid, parentsiteid, type FROM s2layer WHERE siteid=? AND layerid=?");
+	}
+	$sth->execute($site ? $site->siteid : 0, $layerid);
+
+	my ($parentid, $parentsiteid, $type) = $sth->fetchrow_array();
+
+	$self->{type} = $type;
+
+	if ($parentid) {
+		my $parentsite = $parentsiteid ? WebDrove::Site->fetch($parentsiteid) : undef;
+		$self->{parent} = WebDrove::S2::Layer->fetch($parentsite, $parentid);
+	}
+	else {
+		$self->{parent} = 0;
+	}
+
+	return 1;
+}
+
+sub type {
+	$_[0]->_load_meta();
+	return $_[0]->{type};
+}
+
+sub parent {
+	$_[0]->_load_meta();
+	return $_[0]->{parent} != 0 ? $_[0]->{parent} : undef;
+}
+
+sub declared_info {
+	my ($self) = @_;
+
+	return $self->{layerinfo} if defined $self->{layerinfo};
+
+	my $site = $self->owner;
+	my $layerid = $self->layerid;
+
+	my $sth;
+	if ($site) {
+		$sth = $site->db_prepare("SELECT infokey,value FROM s2layerinfo WHERE siteid=? AND layerid=?");
+	}
+	else {
+	    my $db = WebDrove::DB::get_db_reader();
+		$sth = $db->prepare("SELECT infokey,value FROM s2layerinfo WHERE siteid=? AND layerid=?");
+	}
+
+	$sth->execute($site ? $site->siteid : 0, $layerid);
+
+	my %ret = ();
+	while (my ($key, $val) = $sth->fetchrow_array()) {
+		$ret{$key} = $val;
+	}
+
+	$self->{layerinfo} = \%ret;
+
+    return \%ret;
+}
+
+sub uniq {
+	my ($self) = @_;
+
+	my $info = $self->declared_info();
+	return $info->{uniq};
+}
+
+sub name {
+	my ($self) = @_;
+
+	my $info = $self->declared_info();
+	return $info->{name};
 }
 
 sub owner {

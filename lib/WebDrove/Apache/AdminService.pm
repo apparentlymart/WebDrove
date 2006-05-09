@@ -7,6 +7,7 @@ use WebDrove::S2;
 use WebDrove::DB;
 use WebDrove::Apache::Handler;
 use WebDrove::Apache::AdminService::Sites;
+use POSIX qw(strftime);
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
@@ -25,8 +26,8 @@ sub handler {
     # Root Service Information Page
     return root_service() if (scalar(@pathbits) == 0);
 
-    my @remaining_bits = @pathbits[1,];
-    shift @remaining_bits unless defined $remaining_bits[0];
+    my @remaining_bits = @pathbits;
+    shift @remaining_bits;
 
     my $handler = {
         'sites' => \&WebDrove::Apache::AdminService::Sites::service_handler,
@@ -94,6 +95,15 @@ sub xml {
     return 200;
 }
 
+sub xmltime {
+    my ($timestamp) = @_;
+
+    my $tz = strftime("%z", localtime($timestamp));
+    $tz =~ s/(\d{2})(\d{2})/$1:$2/;
+
+    return strftime("%Y-%m-%dT%H:%M:%S", localtime($timestamp)).$tz;
+}
+
 sub Elem {
     return new XMLElem(@_);
 }
@@ -158,7 +168,7 @@ sub as_string {
 }
 
 sub exml {
-    my $str = @_;
+    my ($str) = @_;
     $str =~ s/&/&amp;/g;
     $str =~ s/</&lt;/g;
     $str =~ s/>/&gt;/g;

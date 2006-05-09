@@ -88,6 +88,12 @@ sub style {
     return $self->{style} = WebDrove::S2::Style->fetch($self, $self->{styleid});
 }
 
+sub get_styles {
+	my ($self) = @_;
+
+	return WebDrove::S2::Style->get_site_styles($self);
+}
+
 sub get_page {
     my ($self, $pageid) = @_;
 
