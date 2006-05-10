@@ -21,9 +21,11 @@ $SIG{__DIE__} = sub {
     $r->content_type("text/html");
     http_header($r);
     print "<h1>System Error</h1>\n";
-    print "<p>".ehtml(join('',@err))."</p><div style='display:none'>\n";
+    print "<p>".ehtml(join('',@err))."</p>";
 
-    return 200;
+	pretty_stack_trace($r, 1);
+
+	Apache::exit();
 };
 
 use Data::Dumper;
@@ -123,6 +125,59 @@ sub print_r_p {
     my ($val) = @_;
 
     print "<pre>".ehtml(Data::Dumper::Dumper($val))."</pre>";
+}
+
+sub pretty_stack_trace {
+	my ($r, $skip) = @_;
+	$skip += 1;
+
+	package DB; # HACK: If we call caller() from this package, Perl does magic things
+
+	*DB::ehtml = \&WebDrove::Apache::Handler::ehtml;
+
+	print "<ul>";
+
+    for (my $i = $skip; caller($i); $i++) {
+    	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller($i);
+
+		print "<li><strong>".ehtml($subroutine)."</strong>(";
+
+		if ($hasargs) {
+			my @niceargs = ();
+			foreach my $arg (@DB::args) {
+				if (ref $arg) {
+					if (ref($arg) =~ /^(HASH|ARRAY|SCALAR)$/) {
+						push @niceargs, ref($arg);
+					}
+					else {
+						push @niceargs, ref($arg)." object";
+					}
+				}
+				else {
+					$arg =~ s/\\/\\\\/g;
+					$arg =~ s/\"/\\\"/g; #"
+					push @niceargs, '"'.$arg.'"';
+				}
+			}
+			print join(", ", map({ehtml($_)} @niceargs));
+		}
+
+		print ")<div style='font-size: 0.75em;'>called ";
+
+		if ($line) {
+			print "at <strong>".ehtml($filename)."</strong> line ".ehtml($line);
+		}
+		else {
+			print "from another universe";
+		}
+
+		print "</div></li>";
+
+		#print_r_p([ caller($i) ]);
+	}
+
+	print "</ul>";
+
 }
 
 package WebDrove::S2::Builtin;
