@@ -24,7 +24,7 @@ sub handler {
     shift @pathbits; # Get rid of the empty element caused by the initial slash
 
     # Root Service Information Page
-    return root_service() if (scalar(@pathbits) == 0);
+    return root_service($r) if (scalar(@pathbits) == 0);
 
     my @remaining_bits = @pathbits;
     shift @remaining_bits;
