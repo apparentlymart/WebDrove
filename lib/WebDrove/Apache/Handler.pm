@@ -146,8 +146,8 @@ sub pretty_stack_trace {
 			my @niceargs = ();
 			foreach my $arg (@DB::args) {
 				if (ref $arg) {
-					if (ref($arg) =~ /^(HASH|ARRAY|SCALAR)$/) {
-						push @niceargs, ref($arg);
+					if (ref($arg) =~ /^(HASH|ARRAY|SCALAR|CODE)$/) {
+						push @niceargs, lc(ref($arg))."ref";
 					}
 					else {
 						push @niceargs, ref($arg)." object";

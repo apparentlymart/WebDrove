@@ -112,6 +112,7 @@ sub styles {
 			map {
 				Elem("style",
 					Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$_->styleid)),
+					Attrib("local-id" => $_->pageid),
 					Elem("name" => $_->name),
 					Elem("modtime" => xmltime($_->modtime)),
 					Elem("links",
@@ -140,9 +141,41 @@ sub layer_id_url {
 sub pages {
 	my ($r, $site, $pageid) = @_;
 
+	$pageid += 0;
+	my $siteid = $site->siteid;
+
+	if ($pageid) {
+		my $page = $site->get_page($pageid);
+
+		return not_found($r) unless $page;
+
+		return xml($r,
+			Elem("page",
+				Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$page->pageid)),
+				Attrib("local-id" => $page->pageid),
+				Elem("title" => $page->title),
+				Elem("type" => $page->type->name),
+			),
+		);
+
+	}
+
+
+	my $pages = $site->get_pages();
+
 	return xml($r,
 		Elem("pages",
-
+			map {
+				Elem("page",
+					Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
+					Attrib("local-id" => $_->pageid),
+					Elem("title" => $_->title),
+					Elem("type" => $_->type->name),
+					Elem("links",
+						Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
+					),
+				);
+			} @$pages,
 		),
 	);
 
