@@ -23,9 +23,9 @@ $SIG{__DIE__} = sub {
     print "<h1>System Error</h1>\n";
     print "<p>".ehtml(join('',@err))."</p>";
 
-	pretty_stack_trace($r, 1);
+    pretty_stack_trace($r, 1);
 
-	Apache::exit();
+    Apache::exit();
 };
 
 use Data::Dumper;
@@ -62,11 +62,40 @@ sub site_content {
 
     eval {
 
+        die "No PAGE_SELECTOR is configured; can't continue!" if (ref $WDConf::PAGE_SELECTOR ne 'CODE');
+
+        my $siteid = $WDConf::PAGE_SELECTOR->($r);
+        return 404 unless ($siteid);
+
+        my $site = WebDrove::Site->fetch($siteid);
+        return 404 unless ($site);
+
+        my $uri = $r->uri;
+
+        if ($uri =~ m!^/_/!) { # Special resource URL
+            return 403; # TODO: Make this return stylesheet, images, whatever.
+        }
+
+        my $pagename = undef;
+
+        if ($uri eq '/') {
+            $pagename = "Home"; # FIXME: Don't hardcode "Home" as the homepage
+        }
+        elsif ($uri =~ m!^/([^/]+)/$!) {
+            $pagename = $1;
+            return 404 if $pagename eq 'Home';
+            $pagename =~ s/\+/ /g;
+            $pagename =~ s/%([0-9a-fA-F][0-9a-fA-F])/pack("c",hex($1))/eg;
+        }
+        else {
+            return 404;
+        }
+
+        my $page = $site->get_page_by_title($pagename);
+        return 404 unless $page;
+
         $r->content_type("text/html");
         http_header($r);
-
-        my $site = WebDrove::Site->fetch(1);
-        my $page = $site->get_page_by_title("About Me");
 
         my $sitestyle = $site->style();
         my $ctx = $sitestyle->make_context();
@@ -128,55 +157,60 @@ sub print_r_p {
 }
 
 sub pretty_stack_trace {
-	my ($r, $skip) = @_;
-	$skip += 1;
+    my ($r, $skip) = @_;
+    $skip += 1;
 
-	package DB; # HACK: If we call caller() from this package, Perl does magic things
+    package DB; # HACK: If we call caller() from this package, Perl does magic things
 
-	*DB::ehtml = \&WebDrove::Apache::Handler::ehtml;
+    *DB::ehtml = \&WebDrove::Apache::Handler::ehtml;
 
-	print "<ul>";
+    print "<ul>";
 
     for (my $i = $skip; caller($i); $i++) {
-    	my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller($i);
+        my ($package, $filename, $line, $subroutine, $hasargs, $wantarray, $evaltext, $is_require) = caller($i);
 
-		print "<li><strong>".ehtml($subroutine)."</strong>(";
+        print "<li><strong>".ehtml($subroutine)."</strong>(";
 
-		if ($hasargs) {
-			my @niceargs = ();
-			foreach my $arg (@DB::args) {
-				if (ref $arg) {
-					if (ref($arg) =~ /^(HASH|ARRAY|SCALAR|CODE)$/) {
-						push @niceargs, lc(ref($arg))."ref";
-					}
-					else {
-						push @niceargs, ref($arg)." object";
-					}
-				}
-				else {
-					$arg =~ s/\\/\\\\/g;
-					$arg =~ s/\"/\\\"/g; #"
-					push @niceargs, '"'.$arg.'"';
-				}
-			}
-			print join(", ", map({ehtml($_)} @niceargs));
-		}
+        if ($hasargs) {
+            my @niceargs = ();
+            foreach my $arg (@DB::args) {
+                if (ref $arg) {
+                    if (ref($arg) eq 'HASH' && $arg->{_type}) {
+                        push @niceargs, "S2 ".($arg->{_isnull} ? "null " : "").$arg->{_type}." object";
+                    }
+                    elsif (ref($arg) =~ /^(HASH|ARRAY|SCALAR|CODE)$/) {
+                        push @niceargs, lc(ref($arg))."ref";
+                    }
+                    else {
+                        push @niceargs, ref($arg)." object";
+                    }
+                }
+                elsif (! defined($arg)) {
+                    push @niceargs, "undef";
+                }
+                else {
+                    my $a = $arg;
+                    $a =~ s/\\/\\\\/g;
+                    $a =~ s/\"/\\\"/g; #"
+                    push @niceargs, '"'.$a.'"';
+                }
+            }
+            print join(", ", map({ehtml($_)} @niceargs));
+        }
 
-		print ")<div style='font-size: 0.75em;'>called ";
+        print ")<div style='font-size: 0.75em;'>called ";
 
-		if ($line) {
-			print "at <strong>".ehtml($filename)."</strong> line ".ehtml($line);
-		}
-		else {
-			print "from another universe";
-		}
+        if ($line) {
+            print "at <strong>".ehtml($filename)."</strong> line ".ehtml($line);
+        }
+        else {
+            print "from another universe";
+        }
 
-		print "</div></li>";
+        print "</div></li>";
+    }
 
-		#print_r_p([ caller($i) ]);
-	}
-
-	print "</ul>";
+    print "</ul>";
 
 }
 
