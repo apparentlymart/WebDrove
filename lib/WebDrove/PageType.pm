@@ -38,7 +38,7 @@ sub load_metadata {
     $self->{name} = $meta->{name};
     $self->{displayname} = $meta->{displayname};
     $self->{s2core} = WebDrove::S2::Layer->fetch(undef, $meta->{corelayerid});
-    $self->{constructor} = $WDConf::PAGE_CONSTRUCTOR{$meta->{name}};
+    $self->{pkg} = $WDConf::PAGE_TYPE{$meta->{name}};
 
     return $self->{meta_loaded} = 1;
 }
@@ -47,13 +47,13 @@ sub construct_s2_object {
     my ($self, $page, $ctx) = @_;
 
     $self->load_metadata();
-    my $cons = $self->{constructor};
+    my $pkg = $self->{pkg};
     my $name = $self->{name};
 
-    return undef unless ref $cons eq 'CODE';
+    return undef unless $pkg;
     return undef if $name =~ /\W/;
 
-    return $cons->($page, $ctx, "page_$name");
+    return $pkg->s2_object($page, $ctx, "page_$name");
 }
 
 sub s2_core_layer {
@@ -75,6 +75,19 @@ sub displayname {
 
     $self->load_metadata();
     return $self->{displayname};
+}
+
+sub get_content_xml {
+	my ($self, $page, $xml) = @_;
+
+    $self->load_metadata();
+    my $pkg = $self->{pkg};
+    my $name = $self->{name};
+
+    return undef unless $pkg;
+    return undef if $name =~ /\W/;
+
+    return $pkg->get_content_xml($xml, $page, "page_$name");
 }
 
 1;

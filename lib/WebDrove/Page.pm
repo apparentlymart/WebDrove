@@ -75,4 +75,11 @@ sub s2_object {
     return $self->{s2obj} = $type->construct_s2_object($self, $ctx);
 }
 
+sub get_content_xml {
+    my ($self, $xml) = @_;
+
+    my $type = $self->type;
+	return $type->get_content_xml($self, $xml);
+}
+
 1;

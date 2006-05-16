@@ -154,7 +154,12 @@ sub as_string {
     #$ret .= "\n" unless (scalar(@$kids) == 1 && ref $kids->[0] eq '');
 
     foreach my $kid (@$kids) {
-        $ret .= $kid;
+    	if (ref $kid) {
+	        $ret .= $kid;
+    	}
+    	else {
+	        $ret .= exml($kid);
+    	}
     }
 
     #$ret .= "\n" unless (scalar(@$kids) == 1 && ref $kids->[0] eq '');
@@ -174,6 +179,23 @@ sub exml {
     $str =~ s/>/&gt;/g;
     $str =~ s/"/&quot;/g; #"
     return $str;
+}
+
+package WebDrove::Apache::AdminService::XMLBuilder;
+
+sub new {
+	my ($class) = @_;
+	my $s = "";
+	return bless \$s, $class;
+}
+
+sub attrib {
+	return WebDrove::Apache::AdminService::Attrib($_[1], $_[2]);
+}
+
+sub elem {
+	my $self = shift;
+	return WebDrove::Apache::AdminService::Elem(@_);
 }
 
 1;

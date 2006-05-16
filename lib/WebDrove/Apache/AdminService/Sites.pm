@@ -56,6 +56,9 @@ sub service_handler {
 	                	Elem("list" => abs_url($r, "/sites/$siteid/pages")),
 	                ),
 	            ),
+                Elem("disco",
+	                Elem("pages" => abs_url($r, "/sites/$siteid/pages")),
+				),
             ),
         );
 
@@ -149,35 +152,47 @@ sub pages {
 
 		return not_found($r) unless $page;
 
+		my $content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+
 		return xml($r,
 			Elem("page",
 				Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$page->pageid)),
 				Attrib("local-id" => $page->pageid),
 				Elem("title" => $page->title),
 				Elem("type" => $page->type->name),
+				Elem("content", $content),
 			),
 		);
 
 	}
 
+	my %get = $r->args;
 
-	my $pages = $site->get_pages();
+	if (%get) {
+		my $pageid = $get{localid} + 0;
 
-	return xml($r,
-		Elem("pages",
-			map {
-				Elem("page",
-					Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
-					Attrib("local-id" => $_->pageid),
-					Elem("title" => $_->title),
-					Elem("type" => $_->type->name),
-					Elem("links",
-						Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
-					),
-				);
-			} @$pages,
-		),
-	);
+		return redir($r, "/sites/".$siteid."/pages/".$pageid);
+	}
+	else {
+
+		my $pages = $site->get_pages();
+
+		return xml($r,
+			Elem("pages",
+				map {
+					Elem("page",
+						Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
+						Attrib("local-id" => $_->pageid),
+						Elem("title" => $_->title),
+						Elem("type" => $_->type->name),
+						Elem("links",
+							Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$_->pageid)),
+						),
+					);
+				} @$pages,
+			),
+		);
+	}
 
 }
 
