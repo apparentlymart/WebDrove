@@ -46,3 +46,5 @@ class string
     function builtin repeat(int n) : string
     "Returns the string repeated n times";
 }
+
+

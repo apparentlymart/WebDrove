@@ -73,7 +73,7 @@ sub site_content {
         my $uri = $r->uri;
 
         if ($uri =~ m!^/_/!) { # Special resource URL
-            return 403; # TODO: Make this return stylesheet, images, whatever.
+        	return site_media($r, $site, substr($uri, 3));
         }
 
         my $pagename = undef;
@@ -99,6 +99,7 @@ sub site_content {
 
         my $sitestyle = $site->style();
         my $ctx = $sitestyle->make_context();
+        $ctx->do_stack_trace(1);
 
         my $pages = $site->get_pages();
         my @s2pages = map {
@@ -130,6 +131,24 @@ sub site_content {
     }
 
     return OK;
+}
+
+sub site_media {
+	my ($r, $site, $uri) = @_;
+
+	if ($uri eq 'stylesheet') {
+        my $sitestyle = $site->style();
+        my $ctx = $sitestyle->make_context();
+        $ctx->do_stack_trace(1);
+		$r->content_type("text/css");
+		http_header($r);
+		$ctx->set_print(sub { print $_[1]; });
+		$ctx->run("main_stylesheet()");
+
+	}
+	else {
+		return 404;
+	}
 }
 
 sub http_header {
@@ -212,36 +231,6 @@ sub pretty_stack_trace {
 
     print "</ul>";
 
-}
-
-package WebDrove::S2::Builtin;
-
-sub ehtml {
-    my ($ctx, $s) = @_;
-    $s =~ s/&/&amp;/g;
-    $s =~ s/</&lt;/g;
-    $s =~ s/>/&gt;/g;
-    $s =~ s/"/&quot;/g;#"#
-    $s =~ s/'/&#39;/g;
-    return $s;
-}
-
-sub Page__print_head {
-    my ($ctx, $this) = @_;
-
-    $ctx->_print("<style type=\"text/css\">\n");
-    $ctx->run("main_stylesheet()");
-    $ctx->_print("</style>\n");
-
-}
-
-sub Page__print_body {
-    my ($ctx, $this) = @_;
-
-    my $page = $this->{_page};
-    my $pctx = $page->s2_context();
-    $pctx->set_print(sub { print $_[1]; });
-    $pctx->run("Page::print()", $page->s2_object());
 }
 
 1;

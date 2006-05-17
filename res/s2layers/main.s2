@@ -24,6 +24,11 @@ class Page {
     function builtin print_head() "Produce HTML HEAD content necessary for this page.";
 }
 
+function builtin resource_url_impl(string fn) : string; # FIXME: Do this better
+function resource_url(string fn) : string {
+	return resource_url_impl($fn);
+}
+
 property string text_navigation {
 	noui = 1;
 }

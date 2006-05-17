@@ -132,8 +132,40 @@ task "Populating S2 layers", sub {
             };
             if ($@) { fail("Compile error: $@"); }
 
+            my $layer = WebDrove::S2::install_system_layer(\$compiled, $ck);
 
-            WebDrove::S2::install_system_layer(\$compiled, $ck);
+            my $layerid = $layer->layerid;
+            my $uniq = $layer->uniq;
+            $s2ck{$uniq} = $ck;
+
+            my $dir = $fn;
+            $dir =~ s!/[^/]+$!!g;
+            fail("Unable to determine layer media directory") unless -d $dir;
+
+            my @media = (glob("$dir/*.jpg"), glob("$dir/*.gif"), glob("$dir/*.png"), glob("$dir/*.css"));
+
+            if (@media) {
+
+				task "Installing media" , sub {
+
+					my $destdir = "$WDConf::STATIC_MEDIA_PATH/$layerid";
+					unless (-d $destdir) {
+						mkdir($destdir) or fail("Unable to create layer media dir");
+					}
+
+					foreach my $file (@media) {
+
+						task $file, sub {
+							# FIXME: Do this in a more portable manner
+							system('cp', $file, $destdir);
+						};
+
+					}
+
+				};
+
+			}
+
         };
     }
 
