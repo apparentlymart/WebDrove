@@ -25,7 +25,18 @@ sub get_content_xml {
 sub set_content_xml {
 	my ($class, $elem, $page, $tablename) = @_;
 
+	my $contentset = $elem->getElementsByTagName("body");
+	my $content = $contentset->item(0);
+	my $text = $content->getFirstChild()->getData();
+	$contentset->dispose();
 
+    my $site = $page->owner;
+    my $siteid = $site->siteid;
+    my $pageid = $page->pageid;
+
+	my $success = $site->db_do("UPDATE $tablename SET body=? WHERE siteid=? AND pageid=?", $text, $siteid, $pageid);
+
+	return $success;
 }
 
 sub page_body {
@@ -35,7 +46,7 @@ sub page_body {
     my $siteid = $site->siteid;
     my $pageid = $page->pageid;
 
-    my ($pagebody) = $site->db_selectrow_array("SELECT body FROM $tablename WHERE siteid=? and pageid=?",$siteid,$pageid);
+    my ($pagebody) = $site->db_selectrow_array("SELECT body FROM $tablename WHERE siteid=? AND pageid=?",$siteid,$pageid);
 
 	return $pagebody;
 }

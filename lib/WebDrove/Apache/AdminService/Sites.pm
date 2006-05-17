@@ -193,6 +193,8 @@ sub pages {
 				$page->title($titleelem->getFirstChild()->getData());
 			}
 
+			$page->set_content_xml($contentelem);
+
 			$doc->dispose();
 
 			$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));

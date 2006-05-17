@@ -97,4 +97,11 @@ sub get_content_xml {
 	return $type->get_content_xml($self, $xml);
 }
 
+sub set_content_xml {
+	my ($self, $elem) = @_;
+
+	my $type = $self->type;
+	return $type->set_content_xml($self, $elem);
+}
+
 1;

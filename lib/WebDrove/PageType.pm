@@ -90,4 +90,17 @@ sub get_content_xml {
     return $pkg->get_content_xml($xml, $page, "page_$name");
 }
 
+sub set_content_xml {
+	my ($self, $page, $elem) = @_;
+
+    $self->load_metadata();
+    my $pkg = $self->{pkg};
+    my $name = $self->{name};
+
+    return undef unless $pkg;
+    return undef if $name =~ /\W/;
+
+    return $pkg->set_content_xml($elem, $page, "page_$name");
+}
+
 1;
