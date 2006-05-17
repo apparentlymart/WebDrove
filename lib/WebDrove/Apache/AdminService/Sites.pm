@@ -8,6 +8,7 @@ use WebDrove::Apache::AdminService;
 use WebDrove::S2;
 use WebDrove::DB;
 use WebDrove::Site;
+use XML::DOM;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
@@ -148,23 +149,62 @@ sub pages {
 	my $siteid = $site->siteid;
 
 	if ($pageid) {
+
 		my $page = $site->get_page($pageid);
 
 		return not_found($r) unless $page;
 
-		my $content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+		if ($r->method eq 'GET') {
 
-		return xml($r,
-			Elem("page",
-				Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$page->pageid)),
-				Attrib("local-id" => $page->pageid),
-				Elem("title" => $page->title),
-				Elem("type" => $page->type->name),
-				Elem("content", $content),
-			),
-		);
+			my $content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+
+			return xml($r,
+				Elem("page",
+					Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
+					Attrib("local-id" => $page->pageid),
+					Elem("title" => $page->title),
+					Elem("type" => $page->type->name),
+					Elem("content", $content),
+					Elem("links",
+						Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
+					),
+				),
+			);
+		}
+		elsif ($r->method eq 'PUT') {
+			my $clen = $r->header_in("Content-length");
+			return 400 if (!$clen);
+
+			my $data = "";
+			$r->read($data, $clen);
+
+			my $p = new XML::DOM::Parser();
+			my $doc = $p->parse($data);
+
+			my $titleelem = $doc->getDocumentElement()->getElementsByTagName("title");
+			$titleelem = $titleelem->item(0);
+			return 400 if (! $titleelem);
+
+			my $contentelem = $doc->getDocumentElement()->getElementsByTagName("content");
+			$contentelem = $contentelem->item(0);
+			return 400 if (! $contentelem);
+
+			if ($page->title ne 'Home') { # Not allowed to rename the home page
+				$page->title($titleelem->getFirstChild()->getData());
+			}
+
+			$doc->dispose();
+
+			$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));
+			return 202;
+		}
+		else {
+			return 403;
+		}
 
 	}
+
+	return 403 if $r->method ne 'GET';
 
 	my %get = $r->args;
 

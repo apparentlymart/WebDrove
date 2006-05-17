@@ -47,7 +47,22 @@ sub style {
 }
 
 sub title {
-    return $_[0]->{title};
+	my $self = shift;
+	unless ($_[0]) {
+	    return $self->{title};
+	}
+	else {
+		my $new = shift;
+		my $site = $self->owner();
+		my $siteid = $site->siteid;
+		my $pageid = $self->pageid;
+
+		my $success = $site->db_do("UPDATE page SET title=? WHERE siteid=? AND pageid=?", $new, $siteid, $pageid);
+
+		$self->{title} = $new if $success;
+
+		return $success ? 1 : 0;
+	}
 }
 
 sub owner {
