@@ -62,9 +62,9 @@ sub site_content {
 
     eval {
 
-        die "No PAGE_SELECTOR is configured; can't continue!" if (ref $WDConf::PAGE_SELECTOR ne 'CODE');
+        die "No SITE_SELECTOR is configured; can't continue!" if (ref $WDConf::SITE_SELECTOR ne 'CODE');
 
-        my $siteid = $WDConf::PAGE_SELECTOR->($r);
+        my $siteid = $WDConf::SITE_SELECTOR->($r);
         return 404 unless ($siteid);
 
         my $site = WebDrove::Site->fetch($siteid);
