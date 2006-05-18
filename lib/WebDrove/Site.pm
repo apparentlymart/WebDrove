@@ -134,6 +134,16 @@ sub get_pages {
     return \@ret;
 }
 
+sub delete_page {
+	my ($self, $page) = @_;
+
+	my $siteid = $self->siteid;
+	my $pageid = $page->pageid;
+
+	my $success = $self->db_do("DELETE FROM page WHERE siteid=? AND pageid=?", $siteid, $pageid);
+	return $success ? 1 : 0;
+}
+
 sub equals {
     return $_[0]->siteid eq $_[1]->siteid;
 }

@@ -34,7 +34,7 @@ sub set_content_xml {
     my $siteid = $site->siteid;
     my $pageid = $page->pageid;
 
-	my $success = $site->db_do("UPDATE $tablename SET body=? WHERE siteid=? AND pageid=?", $text, $siteid, $pageid);
+	my $success = $site->db_do("REPLACE INTO $tablename (siteid,pageid,body) VALUES (?,?,?)", $siteid, $pageid, $text);
 
 	return $success;
 }

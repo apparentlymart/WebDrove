@@ -55,6 +55,7 @@ sub service_handler {
 	                ),
 	                Elem("pages",
 	                	Elem("list" => abs_url($r, "/sites/$siteid/pages")),
+	                	Elem("create" => abs_url($r, "/sites/$siteid/pages/add")),
 	                ),
 	            ),
                 Elem("disco",
@@ -116,7 +117,7 @@ sub styles {
 			map {
 				Elem("style",
 					Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$_->styleid)),
-					Attrib("local-id" => $_->pageid),
+					Attrib("local-id" => $_->styleid),
 					Elem("name" => $_->name),
 					Elem("modtime" => xmltime($_->modtime)),
 					Elem("links",
@@ -145,8 +146,36 @@ sub layer_id_url {
 sub pages {
 	my ($r, $site, $pageid) = @_;
 
-	$pageid += 0;
 	my $siteid = $site->siteid;
+
+	if ($pageid eq 'add') {
+
+		return 405 if $r->method ne 'POST';
+
+		my $clen = $r->header_in("Content-length");
+		return 400 if (!$clen);
+
+		my $data = "";
+		$r->read($data, $clen);
+
+		my $p = new XML::DOM::Parser();
+		my $doc = $p->parse($data);
+
+		my $titleelem = $doc->getDocumentElement()->getElementsByTagName("title");
+		$titleelem = $titleelem->item(0);
+		return 400 if (! $titleelem);
+
+		my $title = $titleelem->getFirstChild()->getData();
+		return 400 unless $title;
+
+		my $page = WebDrove::Page->create_new($site, $title, undef);
+		return 500 unless $page;
+
+		$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));
+		return 201;
+	}
+
+	$pageid += 0;
 
 	if ($pageid) {
 
@@ -200,13 +229,18 @@ sub pages {
 			$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));
 			return 202;
 		}
+		elsif ($r->method eq 'DELETE') {
+			my $page = $site->get_page($pageid);
+			my $success = $site->delete_page($page);
+			return $success ? 204 : 500;
+		}
 		else {
-			return 403;
+			return 405;
 		}
 
 	}
 
-	return 403 if $r->method ne 'GET';
+	return 405 if $r->method ne 'GET';
 
 	my %get = $r->args;
 

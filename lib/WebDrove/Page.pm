@@ -13,6 +13,27 @@ sub new {
     return bless $pagemeta, $class;
 }
 
+# FIXME: This is inconsistant with everything else, which uses "fetch" to get
+# an existing one and "new" to create a new one. Need to go through and
+# fix up all the calls to Page and then change these names.
+sub create_new {
+	my ($class, $site, $title, $type) = @_;
+
+	# TODO: After creating the page row, call into the page type handler
+	# to get it to build its initial data structures. For now, the
+	# static page type handler is just designed to work okay when its
+	# data is missing.
+
+	# FIXME: Don't hardcode typeid 1
+
+	my $siteid = $site->siteid;
+	my $pageid = $site->alloc_id("page");
+
+	my $success = $site->db_do("INSERT INTO page (pageid,siteid,title,typeid,styleid,sort) VALUES (?,?,?,1,1,?)", $pageid,$siteid,$title,$pageid);
+
+	return $success ? $site->get_page($pageid) : undef;
+}
+
 sub type {
     my ($self) = @_;
 
@@ -28,7 +49,7 @@ sub pageid {
 }
 
 sub url {
-    return "/".WebDrove::eurl($_[0]->title)."/";
+    return $_[0]->title eq 'Home' ? "/" : "/".WebDrove::eurl($_[0]->title)."/";
 }
 
 sub equals {
