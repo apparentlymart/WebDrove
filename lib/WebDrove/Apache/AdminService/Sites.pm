@@ -60,6 +60,7 @@ sub service_handler {
 	            ),
                 Elem("disco",
 	                Elem("pages" => abs_url($r, "/sites/$siteid/pages")),
+	                Elem("layers" => abs_url($r, "/sites/$siteid/layers")),
 				),
             ),
         );
@@ -71,6 +72,7 @@ sub service_handler {
     my $handler = {
     	'styles' => \&styles,
     	'pages' => \&pages,
+    	'layers' => \&layers,
     }->{$section};
 
 	return $handler ? $handler->($r, $site, @$pathbits) : not_found($r);
@@ -272,5 +274,48 @@ sub pages {
 
 }
 
+sub layers {
+
+	my ($r, $site, $pageid) = @_;
+	my $siteid = $site->siteid;
+
+	my %get = $r->args;
+
+	if (%get) {
+
+		# FIXME: This interface only supports public layers at present.
+		#  Will need to change it later to also include the parent layer's owner
+		my $parentlayerid = $get{parentid} ? $get{parentid} + 0 : undef;
+		my $type = $get{type} || undef;
+
+		my $parentlay = undef;
+		$parentlay = WebDrove::S2::Layer->fetch(undef, $parentlayerid) if (defined($parentlayerid));
+
+		my $layers = WebDrove::S2::get_public_layers($type, $parentlay);
+
+		return xml($r,
+			Elem("layers",
+				map {
+					Elem("layer",
+						Attrib("id" => abs_url($r, "/s2/layers/".$_->layerid)),
+						Attrib("local-id" => $_->layerid),
+						Elem("name" => $_->name),
+						Elem("type" => $_->type),
+						Elem("uniq" => $_->uniq),
+						$_->parent ? Elem("parent" => abs_url($r, "/s2/layers/".$_->parent->layerid)) : undef,
+						Elem("links",
+							Elem("detail" => abs_url($r, "/s2/layers/".$_->layerid)),
+						),
+					);
+				} @$layers,
+			),
+		);
+
+	}
+	else {
+		return not_found($r);
+	}
+
+}
 
 1;

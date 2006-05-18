@@ -59,6 +59,37 @@ sub install_system_layer {
     return $newlayer;
 }
 
+sub get_public_layers {
+	my ($type, $parent) = @_;
+
+	my $query = "SELECT layerid FROM s2layer WHERE siteid=0";
+	my @args = ();
+
+	if (defined($type)) {
+		$query .= " AND type=?";
+		push @args, $type;
+	}
+
+	if (defined($parent)) {
+		my $layerid = $parent->layerid;
+		my $siteid = $parent->owner ? $parent->owner->siteid : 0;
+		$query .= " AND parentid=? AND parentsiteid=?";
+		push @args, $layerid, $siteid;
+	}
+
+	my $dbh = WebDrove::DB::get_db_reader();
+	my $sth = $dbh->prepare($query);
+	$sth->execute(@args);
+
+	my @ret = ();
+
+	while (my ($layerid) = $sth->fetchrow_array()) {
+		push @ret, WebDrove::S2::Layer->fetch(undef, $layerid);
+	}
+
+	return \@ret;
+}
+
 package WebDrove::S2::Builtin;
 
 sub ehtml {
