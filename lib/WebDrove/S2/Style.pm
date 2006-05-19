@@ -59,6 +59,10 @@ sub _load_meta {
 	return 1;
 }
 
+sub owner {
+	return $_[0]->{site};
+}
+
 sub name {
 	$_[0]->_load_meta();
 	return $_[0]->{name};
@@ -95,6 +99,19 @@ sub get_layers {
     }
 
     return $self->{layers} = \@lay;
+}
+
+sub set_layer {
+	my ($self, $type, $layer) = @_;
+
+	my $layerid = $layer->layerid;
+	my $layersiteid = $layer->owner ? $layer->owner->siteid : 0;
+	my $site = $self->owner;
+	my $siteid = $site->siteid;
+	my $styleid = $self->styleid;
+
+	return $site->db_do("REPLACE INTO s2stylelayer (styleid, siteid, type, layerid, layersiteid) VALUES (?,?,?,?,?)", $styleid, $siteid, $type, $layerid, $layersiteid) ? 1 : 0;
+
 }
 
 sub make_context {

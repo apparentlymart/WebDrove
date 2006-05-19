@@ -86,6 +86,18 @@ sub styles {
 
 	if ($styleid) {
 		my $style = WebDrove::S2::Style->fetch($site, $styleid);
+
+		# HACK: Temporarily have a webservice call that just sets the layout,
+		#   until there's time to do this properly.
+		if ($_[3] eq 'setlayout' && $r->method eq 'POST') {
+			my %get = $r->args;
+			return 500 unless $get{layerid};
+			my $newlayer = WebDrove::S2::Layer->fetch(undef, $get{layerid}+0);
+			return 500 unless $newlayer;
+			$style->set_layer("layout", $newlayer);
+			return 204;
+		}
+
 		my $layers = $style->get_layers();
 
 		return not_found($r) unless $style && $layers;
@@ -93,12 +105,14 @@ sub styles {
 		return xml($r,
 			Elem("style",
 				Attrib("id" => abs_url($r, "/sites/$siteid/styles/".$style->styleid)),
+				Attrib("local-id" => $style->styleid),
 				Elem("name" => $style->name),
 				Elem("modtime" => xmltime($style->modtime)),
 				Elem("layers",
 					map {
 						Elem("layer",
 							Attrib("id" => layer_id_url($r, $_)),
+							Attrib("local-id" => $_->layerid),
 							$_->parent ? Attrib("parent" => layer_id_url($r, $_->parent)) : undef,
 							Elem("name" => $_->name),
 							Elem("type" => $_->type),
