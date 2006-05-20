@@ -115,6 +115,7 @@ sub Page__print_body {
     # TEMP HACK: Make this work for the demo
     my $page = $this->{_page};
     my $obj = $page->s2_object();
+    $ctx->_print("<img src='".ehtml($ctx,$obj->{_imgurl})."' style='float: right; margin-left: 5px; margin-bottom: 5px;' alt='' />") if $obj->{_imgurl};
     $ctx->_print($obj->{content});
 
     #my $page = $this->{_page};

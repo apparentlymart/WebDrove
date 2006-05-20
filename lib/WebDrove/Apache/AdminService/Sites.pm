@@ -253,7 +253,7 @@ sub pages {
 
 		if ($r->method eq 'GET') {
 
-			my $content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+			my @content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
 
 			return xml($r,
 				Elem("page",
@@ -261,7 +261,7 @@ sub pages {
 					Attrib("local-id" => $page->pageid),
 					Elem("title" => $page->title),
 					Elem("type" => $page->type->name),
-					Elem("content", $content),
+					Elem("content", @content),
 					Elem("links",
 						Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
 					),
