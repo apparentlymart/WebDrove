@@ -37,6 +37,57 @@ sub service_handler {
         }
     }
 
+	if ($pathbits->[0] eq 'create') {
+		return 405 unless $r->method eq 'POST';
+
+		my $clen = $r->header_in("Content-length");
+		return 400 if (!$clen);
+
+		my $data = "";
+		$r->read($data, $clen);
+
+		my $p = new XML::DOM::Parser();
+		my $doc = $p->parse($data);
+
+		my $nameelem = $doc->getDocumentElement()->getElementsByTagName("name");
+		$nameelem = $nameelem->item(0);
+		return 400 if (! $nameelem);
+
+		my $name = $nameelem->getFirstChild()->getData();
+		return 400 unless $name;
+
+		my $site = WebDrove::Site->new($name);
+		return 500 unless $site;
+
+		my $siteid = $site->siteid;
+		$r->header_out("Location" => abs_url($r, "/sites/".$siteid));
+
+		#my $defstyle = $site->style;
+		#my $defstyleurl = abs_url($r, "/sites/$siteid/styles/".$defstyle->styleid);
+
+        return xml($r,
+            Elem("site",
+            	Attrib("id" => abs_url($r, "/sites/$siteid")),
+            	Attrib("local-id" => $siteid),
+                Elem("name" => $site->name),
+                Elem("links",
+	                Elem("styles",
+	                	#Elem("default" => $defstyleurl),
+	                	Elem("list" => abs_url($r, "/sites/$siteid/styles")),
+	                ),
+	                Elem("pages",
+	                	Elem("list" => abs_url($r, "/sites/$siteid/pages")),
+	                	Elem("create" => abs_url($r, "/sites/$siteid/pages/add")),
+	                ),
+	            ),
+                Elem("disco",
+	                Elem("pages" => abs_url($r, "/sites/$siteid/pages")),
+	                Elem("layers" => abs_url($r, "/sites/$siteid/layers")),
+				),
+            ),
+        );
+
+	}
     my $siteid = shift @$pathbits;
     my $site = WebDrove::Site->fetch($siteid) or return not_found($r);
 
@@ -47,6 +98,7 @@ sub service_handler {
         return xml($r,
             Elem("site",
             	Attrib("id" => abs_url($r, "/sites/$siteid")),
+            	Attrib("local-id" => $siteid),
                 Elem("name" => $site->name),
                 Elem("links",
 	                Elem("styles",

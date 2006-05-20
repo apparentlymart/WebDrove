@@ -20,6 +20,22 @@ sub fetch {
     return bless $self, $class;
 }
 
+sub new {
+	my ($class, $site, $corelayer) = @_;
+
+	my $layerid = $corelayer->layerid;
+	my $siteid = $site->siteid;
+
+	my $styleid = $site->alloc_id("s2style");
+	return undef unless $styleid;
+
+	$site->db_do("INSERT INTO s2style (styleid,siteid,modtime) VALUES (?,?,NOW())", $styleid, $siteid);
+
+	$site->db_do("INSERT INTO s2stylelayer (siteid, styleid, type, layerid, layersiteid) VALUES (?,?,?,?,?)", $siteid, $styleid, "core", $layerid, 0);
+
+	return $class->fetch($site, $styleid);
+}
+
 sub get_site_styles {
 	my ($class, $site) = @_;
 

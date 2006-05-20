@@ -20,6 +20,28 @@ sub fetch {
     return bless $site, $class;
 }
 
+sub new {
+	my ($class, $name) = @_;
+
+    my $db = WebDrove::DB::get_db_writer();
+    my $success = $db->do("INSERT INTO site (name) VALUES (?)", undef, $name);
+    return undef unless $success;
+	my ($siteid) = $db->selectrow_array("SELECT LAST_INSERT_ID()");
+	my $self = $class->fetch($siteid);
+	return undef unless $self;
+
+	my $corelayer = WebDrove::S2::Layer->find_by_uniq("http://www.webdrove.org/ns/s2layers/site/core");
+	my $style = WebDrove::S2::Style->new($self, $corelayer);
+
+	my $styleid = $style->styleid;
+    $db->do("UPDATE site SET styleid=? WHERE siteid=?", undef, $styleid, $siteid);
+
+    # FIXME: Shouldn't hardcode "static" here as type names are site-specific and it should be configurable anyway.
+    my $page = WebDrove::Page->create_new($self, "Home", undef);
+
+    return $self;
+}
+
 sub name {
     return $_[0]->{name};
 }
