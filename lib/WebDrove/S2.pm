@@ -112,10 +112,15 @@ sub Page__print_head {
 sub Page__print_body {
     my ($ctx, $this) = @_;
 
+    # TEMP HACK: Make this work for the demo
     my $page = $this->{_page};
-    my $pctx = $page->s2_context();
-    $pctx->set_print(sub { print $_[1]; });
-    $pctx->run("Page::print()", $page->s2_object());
+    my $obj = $page->s2_object();
+    $ctx->_print($obj->{content});
+
+    #my $page = $this->{_page};
+    #my $pctx = $page->s2_context();
+    #$pctx->set_print(sub { print $_[1]; });
+    #$pctx->run("Page::print()", $page->s2_object());
 }
 
 sub resource_url_impl {
