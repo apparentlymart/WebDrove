@@ -9,7 +9,42 @@ use strict;
 
 my $log = WebDrove::Logging::get_logger();
 
-sub new {
+sub fetch {
+	my ($class, $site, $pageid) = @_;
+
+    my $meta = $site->db_selectrow_hashref("SELECT * FROM page WHERE siteid=? AND pageid=?", $site->siteid, $pageid);
+    return undef unless $meta;
+    $meta->{owner} = $site;
+
+    return $class->_new_from_meta($meta);
+}
+
+sub fetch_by_title {
+	my ($class, $site, $title) = @_;
+
+    my $meta = $site->db_selectrow_hashref("SELECT * FROM page WHERE siteid=? AND title=?", $site->siteid, $title);
+    return undef unless $meta;
+    $meta->{owner} = $site;
+
+    return $class->_new_from_meta($meta);
+}
+
+sub list_pages_by_site {
+	my ($class, $site) = @_;
+
+    my $sth = $site->db_prepare("SELECT * FROM page WHERE siteid=? ORDER BY sort");
+    $sth->execute($site->siteid);
+
+    my @ret = ();
+    while (my $meta = $sth->fetchrow_hashref()) {
+        $meta->{owner} = $site;
+        push @ret, WebDrove::Page->_new_from_meta($meta);
+    }
+
+    return \@ret;
+}
+
+sub _new_from_meta {
     my ($class, $pagemeta) = @_;
 
     return bless $pagemeta, $class;

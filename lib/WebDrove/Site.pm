@@ -119,41 +119,20 @@ sub get_styles {
 sub get_page {
     my ($self, $pageid) = @_;
 
-    my $meta = $self->db_selectrow_hashref("SELECT * FROM page WHERE siteid=? AND pageid=?", $self->siteid, $pageid);
-    return undef unless $meta;
-    $meta->{owner} = $self;
-
-    return new WebDrove::Page($meta);
+	return WebDrove::Page->fetch($self, $pageid);
 }
 
 sub get_page_by_title {
     my ($self, $title) = @_;
 
-    my $meta = $self->db_selectrow_hashref("SELECT * FROM page WHERE siteid=? AND title=?", $self->siteid, $title);
-    return undef unless $meta;
-    $meta->{owner} = $self;
-
-    return new WebDrove::Page($meta);
+	return WebDrove::Page->fetch_by_title($self, $title);
 }
 
 sub get_pages {
     my ($self) = @_;
 
-    my $ooify = sub {
-        my ($meta) = @_;
+	return WebDrove::Page->list_pages_by_site($self);
 
-    };
-
-    my $sth = $self->db_prepare("SELECT * FROM page WHERE siteid=? ORDER BY sort");
-    $sth->execute($self->siteid);
-
-    my @ret = ();
-    while (my $meta = $sth->fetchrow_hashref()) {
-        $meta->{owner} = $self;
-        push @ret, new WebDrove::Page($meta);
-    }
-
-    return \@ret;
 }
 
 sub delete_page {
