@@ -248,7 +248,7 @@ sub pages {
 		my $type = $typeelem->getFirstChild()->getData();
 		return logged_error_response(400, "Empty type name in page add request") unless $type;
 
-		my $page = WebDrove::Page->create_new($site, $title, $type);
+		my $page = WebDrove::Page->new($site, $title, $type);
 		return logged_error_response(500, "Page creation failed") unless $page;
 
 		$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));

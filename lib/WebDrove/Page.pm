@@ -50,16 +50,17 @@ sub _new_from_meta {
     return bless $pagemeta, $class;
 }
 
-# FIXME: This is inconsistant with everything else, which uses "fetch" to get
-# an existing one and "new" to create a new one. Need to go through and
-# fix up all the calls to Page and then change these names.
-sub create_new {
+sub new {
 	my ($class, $site, $title, $typename) = @_;
 
 	# TODO: After creating the page row, call into the page type handler
 	# to get it to build its initial data structures. For now, the
 	# static page type handler is just designed to work okay when its
 	# data is missing.
+
+	unless ($site && $title && $typename) {
+		$log->logdie("Invalid parameters to 'new' method");
+	}
 
 	my $siteid = $site->siteid;
 	my $pageid = $site->alloc_id("page");
