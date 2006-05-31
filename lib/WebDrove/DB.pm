@@ -5,6 +5,8 @@ use DBI;
 use WebDrove::Config;
 use strict;
 
+my $log = WebDrove::Logging::get_logger();
+
 # For now we just have one DB handle per Apache child and use it for everything.
 # Moving forward we will need to implement a multi-db role-based setup where
 # load can be spread sensibly over multiple DB hosts.
@@ -49,25 +51,30 @@ sub alloc_id {
     my ($dbh, $siteid, $area, $recursing) = @_;
 
     $siteid += 0;
-    die "No dbh provided" unless $dbh;
+    $log->logdie("No dbh provided") unless $dbh;
+
+	$log->debug(($recursing ? "Recursive " : "")."alloc_id for $area ".($siteid ? "belonging to site $siteid" : "belonging to the system"));
 
     # Must make sure that we use the same dbh throughout to get the right id
     my $present = $dbh->do("UPDATE counter SET max=LAST_INSERT_ID(max+1) WHERE siteid=? AND area=?", undef, $siteid, $area);
 
-    if ($present) {
+    if ($present != 0) {
         my $newid = $dbh->selectrow_array("SELECT LAST_INSERT_ID()");
+		$log->debug("Allocated $siteid:$area ID $newid");
         return $newid if $newid;
     }
 
     # If we're recursing (see below) and it's not present then something bad has happened. Bail out!
-    die "Failed to allocate $area id for site $siteid" if $recursing;
+    $log->logdie("Failed to allocate $area id for site $siteid") if $recursing;
 
     # If we've got this far, then caller is asking for a counter that's never been allocated before.
     # We need to initialize the counter with an appropriate value.
 
     my $lockname = "counteralloc-$siteid-$area";
     my $locked = $dbh->selectrow_array("SELECT GET_LOCK(?,5)", undef, $lockname);
-    die "Failed to aquire counter lock for $area in site $siteid" unless $locked;
+    $log->logdie("Failed to aquire counter lock for $area in site $siteid") unless $locked;
+
+	$log->debug("Initializing new counter for $area ".($siteid ? "belonging to site $siteid" : "belonging to the system"));
 
     my $newmax = undef;
 
@@ -81,7 +88,7 @@ sub alloc_id {
         $newmax = $dbh->selectrow_array("SELECT MAX(pageid) FROM page WHERE siteid=?", undef, $siteid);
     }
     else {
-        die "Unknown counter area '$area'";
+    	$log->logdie("Unknown counter area '$area'");
     }
     #die "Failed to initialize max value for $area" unless defined($newmax);
 
