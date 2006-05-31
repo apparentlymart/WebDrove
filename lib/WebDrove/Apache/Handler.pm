@@ -13,6 +13,8 @@ use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
 
+my $log = WebDrove::Logging::get_logger();
+
 $SIG{__DIE__} = sub {
     my $r = Apache->request;
     my @err = shift;

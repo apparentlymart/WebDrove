@@ -9,12 +9,17 @@ use WebDrove::S2::Layer;
 use S2::Runtime::OO;
 
 my $s2 = new S2::Runtime::OO;
+my $log = WebDrove::Logging::get_logger();
 
 sub make_context {
     my ($layers) = @_;
 
     # Can pass in a style as the first argument, in which case its layers are used
     $layers = $layers->get_layers() if ($layers->isa('WebDrove::S2::Style'));
+
+	$log->logdie("Can't make context with no layers") unless @$layers;
+
+	$log->debug("Making S2 context for layers ", sub { join(',', map { $_->layerid } @$layers); });
 
 	my %layermap = ();
 
@@ -39,7 +44,7 @@ sub install_system_layer {
     my @inc = sort keys %INC;
     my $uniq = $news2layer->get_layer_info("uniq");
 
-    die("All system layers must declare 'uniq' layerinfo") unless $uniq;
+    $log->logdie("All system layers must declare 'uniq' layerinfo") unless $uniq;
 
     my $oldlayer = WebDrove::S2::Layer->find_by_uniq($uniq);
 
@@ -113,15 +118,18 @@ sub Page__print_body {
     my ($ctx, $this) = @_;
 
     # TEMP HACK: Make this work for the demo
-    my $page = $this->{_page};
-    my $obj = $page->s2_object();
-    $ctx->_print("<img src='".ehtml($ctx,$obj->{_imgurl})."' style='float: right; margin-left: 5px; margin-bottom: 5px;' alt='' />") if $obj->{_imgurl};
-    $ctx->_print($obj->{content});
-
     #my $page = $this->{_page};
-    #my $pctx = $page->s2_context();
-    #$pctx->set_print(sub { print $_[1]; });
-    #$pctx->run("Page::print()", $page->s2_object());
+    #my $obj = $page->s2_object();
+    #$ctx->_print("<img src='".ehtml($ctx,$obj->{_imgurl})."' style='float: right; margin-left: 5px; margin-bottom: 5px;' alt='' />") if $obj->{_imgurl};
+    #$ctx->_print($obj->{content});
+
+    my $page = $this->{_page};
+    my $pctx = $page->s2_context();
+    $pctx->set_print(sub { print $_[1]; });
+    $pctx->run("Page::print()", $page->s2_object());
+
+    #print STDERR Data::Dumper::Dumper($pctx);
+    #print STDERR Data::Dumper::Dumper($page);
 }
 
 sub resource_url_impl {

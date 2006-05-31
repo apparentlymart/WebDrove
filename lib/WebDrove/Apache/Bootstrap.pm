@@ -3,6 +3,7 @@
 package WebDrove::Apache::Bootstrap;
 
 use WebDrove;
+use WebDrove::Logging;
 use WebDrove::Apache::Handler;
 #use Apache::CompressClientFixup;
 use Digest::MD5;
@@ -10,8 +11,12 @@ use Storable;
 #use Unicode::MapUTF8 ();
 use DBI;
 
+my $log = WebDrove::Logging::get_logger();
+
 # Called once on server startup
 sub handle_start {
+
+	$log->info("WebDrove for mod_perl initializing");
 
     # The goal here is to pull in as many libraries as possible
     # during Apache initialization so that when Apache forks
@@ -23,7 +28,6 @@ sub handle_start {
 
     DBI->install_driver("mysql");
 
-
     # Give any extra local code the opportunity to initialize pre-fork
     eval { handle_start_local(); };
 
@@ -31,6 +35,8 @@ sub handle_start {
 
 # Called every time the server restarts
 sub handle_restart {
+
+	$log->info("WebDrove for mod_perl restarting");
 
     # Here we add some stuff to httpd.conf so that loading WebDrove is a one-liner
 

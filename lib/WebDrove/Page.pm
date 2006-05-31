@@ -7,6 +7,8 @@ use WebDrove::S2;
 use WebDrove::PageType;
 use strict;
 
+my $log = WebDrove::Logging::get_logger();
+
 sub new {
     my ($class, $pagemeta) = @_;
 
@@ -92,6 +94,9 @@ sub owner {
 
 sub s2_context {
     my ($self) = @_;
+
+	$log->debug("Making S2 context for page ".$self->pageid);
+
 
     return $self->{s2ctx} if defined $self->{s2ctx};
 

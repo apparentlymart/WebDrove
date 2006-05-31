@@ -14,6 +14,7 @@ BEGIN {
 package WebDrove::Config;
 
 use strict;
+use lib "$ENV{WDHOME}/lib";
 
 my $cfg;
 if ($ENV{WDCONFIG}) {

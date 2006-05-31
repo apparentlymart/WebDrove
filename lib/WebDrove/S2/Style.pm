@@ -6,6 +6,8 @@ use WebDrove;
 use WebDrove::S2;
 use Carp qw(croak);
 
+my $log = WebDrove::Logging::get_logger();
+
 sub fetch {
     my ($class, $site, $styleid) = @_;
 
@@ -56,7 +58,7 @@ sub get_site_styles {
 }
 
 sub styleid {
-	croak "Invalid style object (no styleid)" unless $_[0]->{styleid};
+	$log->logcroak("Invalid style object (no styleid)") unless $_[0]->{styleid};
     return $_[0]->{styleid};
 }
 
@@ -91,6 +93,8 @@ sub modtime {
 
 sub get_layers {
     my ($self) = @_;
+
+	$log->debug("Getting layers for style ".$self->styleid);
 
     return $self->{layers} if defined $self->{layers};
 
@@ -132,6 +136,8 @@ sub set_layer {
 
 sub make_context {
     my ($self) = @_;
+
+	$log->debug("Making S2 context for style ".$self->styleid);
 
     return WebDrove::S2::make_context($self);
 }

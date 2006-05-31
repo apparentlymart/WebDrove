@@ -9,9 +9,11 @@
 package WebDrove;
 
 use WebDrove::Config;
+use WebDrove::Logging;
 use WebDrove::DB;
 use strict;
 
+my $log = WebDrove::Logging::get_logger();
 
 sub eurl {
     my $a = $_[0];

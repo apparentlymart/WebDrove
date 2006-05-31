@@ -12,6 +12,8 @@ use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
 
+my $log = WebDrove::Logging::get_logger();
+
 sub handler {
     my $r = shift;
 
@@ -42,10 +44,15 @@ sub root_service {
     return xml($r,
         Elem("webdrove",
             Elem("disco",
-                Elem("site", "/sites"),
-                Elem("s2layer", "/s2/layers"),
+                Elem("site", abs_url($r, "/sites")),
+                Elem("s2layer", abs_url($r, "/s2/layers")),
             ),
-        )
+            Elem("links",
+                Elem("sites",
+                	Elem("create" => abs_url($r, "/sites/create")),
+                ),
+            ),
+        ),
     );
 
 }
