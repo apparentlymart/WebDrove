@@ -119,6 +119,12 @@ sub Attrib {
     return [ $_[0], $_[1] ];
 }
 
+sub logged_error_response {
+	my ($response_code, $errmsg) = @_;
+	$log->error("$response_code $errmsg");
+	return $response_code;
+}
+
 package XMLElem;
 
 use overload q{""} => 'as_string';

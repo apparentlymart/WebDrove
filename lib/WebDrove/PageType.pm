@@ -7,6 +7,8 @@ use WebDrove::DB;
 use WebDrove::S2;
 use strict;
 
+my $log = WebDrove::Logging::get_logger();
+
 sub fetch {
     my ($class, $typeid) = @_;
 
@@ -21,7 +23,32 @@ sub fetch {
     return bless $self, $class;
 }
 
+sub fetch_by_name {
+	my ($class, $name) = @_;
+
+	$log->debug("Fetching PageType $name");
+
+    my $db = WebDrove::DB::get_db_reader();
+    my $meta = $db->selectrow_hashref("SELECT typeid,name,displayname,corelayerid FROM pagetype WHERE name = ?", undef, $name);
+    my $self = {};
+
+	if (! $meta) {
+		$log->debug("Failed to load PageType $name");
+		return undef;
+	}
+
+    $self->{typeid} = $meta->{typeid};
+    $self->{name} = $meta->{name};
+    $self->{displayname} = $meta->{displayname};
+    $self->{s2core} = WebDrove::S2::Layer->fetch(undef, $meta->{corelayerid});
+    $self->{pkg} = $WDConf::PAGE_TYPE{$meta->{name}};
+	$self->{meta_loaded} = 1;
+
+    return bless $self, $class;
+}
+
 sub typeid {
+	$log->logcroak("Invalid PageType object (no typeid)") unless $_[0]->{typeid};
     return $_[0]->{typeid};
 }
 

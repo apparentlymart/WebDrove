@@ -13,6 +13,8 @@ use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
                          M_TRACE M_OPTIONS);
 
+my $log = WebDrove::Logging::get_logger();
+
 *redir = \&WebDrove::Apache::AdminService::redir;
 *Elem = \&WebDrove::Apache::AdminService::Elem;
 *Attrib = \&WebDrove::Apache::AdminService::Attrib;
@@ -20,6 +22,7 @@ use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
 *not_found = \&WebDrove::Apache::AdminService::not_found;
 *abs_url = \&WebDrove::Apache::AdminService::abs_url;
 *xmltime = \&WebDrove::Apache::AdminService::xmltime;
+*logged_error_response = \&WebDrove::Apache::AdminService::logged_error_response;
 
 sub service_handler {
     my ($r, $pathbits) = @_;
@@ -218,10 +221,12 @@ sub pages {
 
 	if ($pageid eq 'add') {
 
-		return 405 if $r->method ne 'POST';
+		$log->debug("Creating new page for site ".$site->siteid);
+
+		return logged_error_response(405, "Invalid request method ".$r->method." for page add request") if $r->method ne 'POST';
 
 		my $clen = $r->header_in("Content-length");
-		return 400 if (!$clen);
+		return logged_error_response(400, "Missing content length in page add request") if (!$clen);
 
 		my $data = "";
 		$r->read($data, $clen);
@@ -231,15 +236,25 @@ sub pages {
 
 		my $titleelem = $doc->getDocumentElement()->getElementsByTagName("title");
 		$titleelem = $titleelem->item(0);
-		return 400 if (! $titleelem);
+		return logged_error_response(400, "Missing title element in page add request") if (! $titleelem);
+
+		my $typeelem = $doc->getDocumentElement()->getElementsByTagName("type");
+		$typeelem = $typeelem->item(0);
+		logged_error_response(400, "Missing type element in page add request") if (! $typeelem);
 
 		my $title = $titleelem->getFirstChild()->getData();
-		return 400 unless $title;
+		return logged_error_response(400, "Empty title in page add request") unless $title;
 
-		my $page = WebDrove::Page->create_new($site, $title, undef);
-		return 500 unless $page;
+		my $type = $typeelem->getFirstChild()->getData();
+		return logged_error_response(400, "Empty type name in page add request") unless $type;
+
+		my $page = WebDrove::Page->create_new($site, $title, $type);
+		return logged_error_response(500, "Page creation failed") unless $page;
 
 		$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));
+
+
+		$log->debug("Created new page ".$page->pageid." for site ".$site->siteid);
 		return 201;
 	}
 

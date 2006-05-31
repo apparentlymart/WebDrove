@@ -19,19 +19,40 @@ sub new {
 # an existing one and "new" to create a new one. Need to go through and
 # fix up all the calls to Page and then change these names.
 sub create_new {
-	my ($class, $site, $title, $type) = @_;
+	my ($class, $site, $title, $typename) = @_;
 
 	# TODO: After creating the page row, call into the page type handler
 	# to get it to build its initial data structures. For now, the
 	# static page type handler is just designed to work okay when its
 	# data is missing.
 
-	# FIXME: Don't hardcode typeid 1
-
 	my $siteid = $site->siteid;
 	my $pageid = $site->alloc_id("page");
 
-	my $success = $site->db_do("INSERT INTO page (pageid,siteid,title,typeid,styleid,sort) VALUES (?,?,?,1,1,?)", $pageid,$siteid,$title,$pageid);
+	$log->debug("Creating new page for site ".$site->siteid);
+
+	my $type = WebDrove::PageType->fetch_by_name($typename);
+	unless ($type) {
+		$log->error("Attempt to create a page of non-existant type $type");
+		return undef;
+	}
+
+	my $corelayer = $type->s2_core_layer();
+	unless ($type) {
+		$log->error("Failed to get core layer for page type $type");
+		return undef;
+	}
+
+	my $style = WebDrove::S2::Style->new($site, $corelayer);
+	unless ($style) {
+		$log->error("Failed to create new style for a new page of type $type");
+		return undef;
+	}
+
+	my $typeid = $type->typeid;
+	my $styleid = $style->styleid;
+
+	my $success = $site->db_do("INSERT INTO page (pageid,siteid,title,typeid,styleid,sort) VALUES (?,?,?,?,?,?)", $pageid,$siteid,$title,$typeid,$styleid,$pageid);
 
 	return $success ? $site->get_page($pageid) : undef;
 }

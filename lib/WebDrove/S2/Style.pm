@@ -26,14 +26,26 @@ sub new {
 	my ($class, $site, $corelayer) = @_;
 
 	my $layerid = $corelayer->layerid;
+	my $layersite = $corelayer->owner;
 	my $siteid = $site->siteid;
+	my $layersiteid = ($layersite ? $layersite->siteid : 0);
+
+	$log->debug("Creating new style for site ".$siteid);
 
 	my $styleid = $site->alloc_id("s2style");
 	return undef unless $styleid;
 
-	$site->db_do("INSERT INTO s2style (styleid,siteid,modtime) VALUES (?,?,NOW())", $styleid, $siteid);
+	my $success = $site->db_do("INSERT INTO s2style (styleid,siteid,modtime) VALUES (?,?,NOW())", $styleid, $siteid);
+	if (! $success) {
+		$log->error("Failed to create new style for site ".$siteid);
+		return undef;
+	}
 
-	$site->db_do("INSERT INTO s2stylelayer (siteid, styleid, type, layerid, layersiteid) VALUES (?,?,?,?,?)", $siteid, $styleid, "core", $layerid, 0);
+	$success = $site->db_do("INSERT INTO s2stylelayer (siteid, styleid, type, layerid, layersiteid) VALUES (?,?,?,?,?)", $siteid, $styleid, "core", $layerid, $layersiteid);
+	if (! $success) {
+		$log->error("Failed to set core layer for new style ".$styleid." owned by site ".$siteid);
+		return undef;
+	}
 
 	return $class->fetch($site, $styleid);
 }
@@ -94,7 +106,7 @@ sub modtime {
 sub get_layers {
     my ($self) = @_;
 
-	$log->debug("Getting layers for style ".$self->styleid);
+	$log->debug("Getting layers for style ".$self->styleid." owned by site ".$self->owner->siteid);
 
     return $self->{layers} if defined $self->{layers};
 
