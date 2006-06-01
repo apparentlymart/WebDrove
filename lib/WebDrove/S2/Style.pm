@@ -146,6 +146,22 @@ sub set_layer {
 
 }
 
+sub delete_self {
+	my ($self) = @_;
+
+	my $siteid = $self->owner->siteid;
+	my $styleid = $self->styleid;
+
+	$log->debug("Style $styleid from site $siteid deleting itself");
+
+	my $success = $self->owner->db_do("DELETE FROM s2style WHERE siteid=? AND styleid=?", $siteid, $styleid);
+
+	$log->debug("Failed to delete style $styleid from site $siteid") unless $success;
+
+	return $success ? 1 : 0;
+
+}
+
 sub make_context {
     my ($self) = @_;
 

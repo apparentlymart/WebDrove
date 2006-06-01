@@ -138,11 +138,8 @@ sub get_pages {
 sub delete_page {
 	my ($self, $page) = @_;
 
-	my $siteid = $self->siteid;
-	my $pageid = $page->pageid;
+	return $page->delete_self();
 
-	my $success = $self->db_do("DELETE FROM page WHERE siteid=? AND pageid=?", $siteid, $pageid);
-	return $success ? 1 : 0;
 }
 
 sub equals {

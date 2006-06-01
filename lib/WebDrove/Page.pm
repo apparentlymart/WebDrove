@@ -149,6 +149,29 @@ sub owner {
     return $_[0]->{owner};
 }
 
+sub delete_self {
+	my ($self) = @_;
+
+	$log->debug("Page ".$self->pageid." from site ".$self->owner->siteid." deleting itself");
+
+	# Clean up the page style
+	my $style = $self->style;
+	if (! $style->delete_self()) {
+		$log->debug("Failed to delete style for page ".$self->pageid);
+		return 0;
+	}
+
+	my $siteid = $self->owner->siteid;
+	my $pageid = $self->pageid;
+
+	my $success = $self->owner->db_do("DELETE FROM page WHERE siteid=? AND pageid=?", $siteid, $pageid) ? 1 : 0;
+
+	$log->debug("Failed to delete page ".$self->pageid) unless $success;
+
+	return $success;
+
+}
+
 sub s2_context {
     my ($self) = @_;
 
