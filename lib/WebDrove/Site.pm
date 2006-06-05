@@ -37,7 +37,7 @@ sub new {
     $db->do("UPDATE site SET styleid=? WHERE siteid=?", undef, $styleid, $siteid);
 
     # FIXME: Shouldn't hardcode "static" here as type names are site-specific and it should be configurable anyway.
-    my $page = WebDrove::Page->create_new($self, "Home", undef);
+    my $page = WebDrove::Page->new($self, "Home", "static");
 
     return $self;
 }

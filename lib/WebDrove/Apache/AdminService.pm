@@ -7,6 +7,7 @@ use WebDrove::S2;
 use WebDrove::DB;
 use WebDrove::Apache::Handler;
 use WebDrove::Apache::AdminService::Sites;
+use WebDrove::Apache::AdminService::S2;
 use POSIX qw(strftime);
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
                          HTTP_MOVED_PERMANENTLY HTTP_MOVED_TEMPORARILY
@@ -33,6 +34,7 @@ sub handler {
 
     my $handler = {
         'sites' => \&WebDrove::Apache::AdminService::Sites::service_handler,
+        's2' => \&WebDrove::Apache::AdminService::S2::service_handler,
     }->{$pathbits[0]};
 
     return $handler ? $handler->($r, \@remaining_bits) : not_found($r);
