@@ -1,0 +1,16 @@
+
+layerinfo "type" = "layout";
+layerinfo "name" = "Images on the Right";
+layerinfo "uniq" = "http://www.webdrove.org/ns/s2layers/page/static/imgonright";
+
+function Page::print() {
+	println """<div style="float:right;">""";
+	foreach var Image i ($.images) {
+		if ($i.link_url != "") { print "<a href='"+ehtml($i.link_url)+"'>"; }
+		print "<img src='"+ehtml($i.url)+"' alt='"+ehtml($i.alt)+"' />";
+		if ($i.link_url != "") { print "</a>"; }
+	}
+	println """</div>""";
+    print $.content;
+}
+
