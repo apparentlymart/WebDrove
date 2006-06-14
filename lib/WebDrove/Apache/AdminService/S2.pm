@@ -40,43 +40,66 @@ sub service_handler {
 }
 
 sub layers {
-	my ($r, @pathbits) = @_;
+	my ($r, $layerid, $mode) = @_;
 
 	my %get = $r->args;
 
-	if (%get) {
+	if (defined($layerid)) {
 
-		# FIXME: This interface only supports public layers at present.
-		#  Will need to change it later to also include the parent layer's owner
-		my $parentlayerid = $get{parentid} ? $get{parentid} + 0 : undef;
-		my $type = $get{type} || undef;
-
-		my $parentlay = undef;
-		$parentlay = WebDrove::S2::Layer->fetch(undef, $parentlayerid) if (defined($parentlayerid));
-
-		my $layers = WebDrove::S2::get_public_layers($type, $parentlay);
+		my $layer = WebDrove::S2::Layer->fetch(undef, $layerid);
 
 		return xml($r,
-			Elem("layers",
-				map {
-					Elem("layer",
-						Attrib("id" => abs_url($r, "/s2/layers/".$_->layerid)),
-						Attrib("local-id" => $_->layerid),
-						Elem("name" => $_->name),
-						Elem("type" => $_->type),
-						Elem("uniq" => $_->uniq),
-						$_->parent ? Elem("parent" => abs_url($r, "/s2/layers/".$_->parent->layerid)) : undef,
-						Elem("links",
-							Elem("detail" => abs_url($r, "/s2/layers/".$_->layerid)),
-						),
-					);
-				} @$layers,
+			Elem("layer",
+				Attrib("id" => abs_url($r, "/s2/layers/".$layer->layerid)),
+				Attrib("local-id" => $layer->layerid),
+				Elem("name" => $layer->name),
+				Elem("type" => $layer->type),
+				Elem("uniq" => $layer->uniq),
+				$layer->parent ? Elem("parent" => abs_url($r, "/s2/layers/".$layer->parent->layerid)) : undef,
+				Elem("links",
+					Elem("detail" => abs_url($r, "/s2/layers/".$layer->layerid)),
+				),
 			),
 		);
 
+
 	}
 	else {
-		return not_found($r);
+
+		if (%get) {
+
+			# FIXME: This interface only supports public layers at present.
+			#  Will need to change it later to also include the parent layer's owner
+			my $parentlayerid = $get{parentid} ? $get{parentid} + 0 : undef;
+			my $type = $get{type} || undef;
+
+			my $parentlay = undef;
+			$parentlay = WebDrove::S2::Layer->fetch(undef, $parentlayerid) if (defined($parentlayerid));
+
+			my $layers = WebDrove::S2::get_public_layers($type, $parentlay);
+
+			return xml($r,
+				Elem("layers",
+					map {
+						Elem("layer",
+							Attrib("id" => abs_url($r, "/s2/layers/".$_->layerid)),
+							Attrib("local-id" => $_->layerid),
+							Elem("name" => $_->name),
+							Elem("type" => $_->type),
+							Elem("uniq" => $_->uniq),
+							$_->parent ? Elem("parent" => abs_url($r, "/s2/layers/".$_->parent->layerid)) : undef,
+							Elem("links",
+								Elem("detail" => abs_url($r, "/s2/layers/".$_->layerid)),
+							),
+						);
+					} @$layers,
+				),
+			);
+
+		}
+		else {
+			return not_found($r);
+		}
 	}
 
 }

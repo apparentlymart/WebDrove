@@ -26,6 +26,8 @@ sub handler {
     my @pathbits = split(m!/!, $r->uri);
     shift @pathbits; # Get rid of the empty element caused by the initial slash
 
+	$log->debug("Admin Service request for ".join('/', @pathbits));
+
     # Root Service Information Page
     return root_service($r) if (scalar(@pathbits) == 0);
 

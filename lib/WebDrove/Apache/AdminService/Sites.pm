@@ -304,6 +304,7 @@ sub pages {
 						Elem("links",
 							Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
 							Elem("layouts" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/layouts")),
+							Elem("style" => abs_url($r, "/sites/$siteid/styles/".$page->style->styleid)),
 						),
 					),
 				);
