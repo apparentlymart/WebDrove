@@ -30,7 +30,6 @@ sub new {
     my ($class, $sourceref, $checker, $parent, $site) = @_;
 
     die "Expecting a scalarref compiler output and a checker" unless ref $sourceref eq 'SCALAR' and $checker->isa('S2::Checker');
-    die "Creating layers with parents is not yet implemented" if $parent;
     die "Creating non-system layers is not yet implemented" if $site;
 
     my $news2layer = WebDrove::S2::compile_layer_source($sourceref);
@@ -75,7 +74,7 @@ sub new {
         $db_do->("INSERT INTO s2layerinfo (layerid,siteid,infokey,value) VALUES (?,?,?,?)", $layerid, $siteid, $k, $layerinfo->{$k}) if defined($layerinfo->{$k}) or die("Failed to insert layerinfo $k");
     }
 
-    $db_do->("INSERT INTO s2layer (layerid,parentid,parentsiteid,siteid,type) VALUES (?,NULL,NULL,?,?)", $layerid, $siteid, $layertype) or die("Failed to insert layer metadata");
+    $db_do->("INSERT INTO s2layer (layerid,parentid,parentsiteid,siteid,type) VALUES (?,?,?,?,?)", $layerid, ($parent ? $parent->layerid : undef), (($parent && $parent->owner) ? $parent->owner->siteid : undef), ($site ? $site->siteid : 0), $layertype) or die("Failed to insert layer metadata");
 
     return fetch($class, $site, $layerid);
 }
@@ -153,6 +152,8 @@ sub _load_meta {
 
 	my ($parentid, $parentsiteid, $type) = $sth->fetchrow_array();
 
+	die "Failed to load metadata for layerid ".$self->layerid unless $type;
+
 	$self->{type} = $type;
 
 	if ($parentid) {
@@ -174,6 +175,14 @@ sub type {
 sub parent {
 	$_[0]->_load_meta();
 	return $_[0]->{parent} != 0 ? $_[0]->{parent} : undef;
+}
+
+sub children {
+	my ($self, $type) = @_;
+
+	# Can pass in $type as undef to get all children.
+
+	return WebDrove::S2::get_public_layers($type, $self);
 }
 
 sub declared_info {
@@ -262,6 +271,18 @@ sub get_raw_s2_object {
     }
 
     return $self->{s2layer} = WebDrove::S2::compile_layer_source(\$layersource);
+}
+
+sub equals {
+	my ($self, $other) = @_;
+
+	my $selfowner = defined($self->owner) ? $self->owner->siteid : undef;
+	my $otherowner = defined($other->owner) ? $other->owner->siteid : undef;
+
+	return 0 unless $other->isa('S2::Layer');
+	return 1 if $self->layerid == $other->layerid;
+	return 1 if $selfowner == $otherowner;
+	return 0;
 }
 
 1;

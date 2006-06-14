@@ -38,7 +38,7 @@ sub compile_layer_source {
 }
 
 sub install_system_layer {
-    my ($sourceref, $checker) = @_;
+    my ($sourceref, $checker, $parent) = @_;
 
     my $news2layer = $s2->layer_from_string($sourceref);
     my @inc = sort keys %INC;
@@ -47,6 +47,14 @@ sub install_system_layer {
     $log->logdie("All system layers must declare 'uniq' layerinfo") unless $uniq;
 
     my $oldlayer = WebDrove::S2::Layer->find_by_uniq($uniq);
+
+    if ($oldlayer) {
+    	my $oldparentid = $oldlayer->parent() ? $oldlayer->parent()->layerid : undef;
+    	my $parentid = $parent ? $parent->layerid : undef;
+    	unless ($oldparentid == $parentid) {
+    		$log->logdie("Can't reparent an existing layer (changing parent from $oldparentid to $parentid)");
+    	}
+    }
 
     my $newlayer;
 
@@ -58,7 +66,7 @@ sub install_system_layer {
     }
     else {
         # Need to create a new layer
-        $newlayer = new WebDrove::S2::Layer($sourceref, $checker);
+        $newlayer = new WebDrove::S2::Layer($sourceref, $checker, $parent);
     }
 
     return $newlayer;

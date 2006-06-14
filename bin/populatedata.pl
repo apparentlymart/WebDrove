@@ -108,6 +108,7 @@ task "Populating S2 layers", sub {
             if (defined($parent)) {
                 $ck = $s2ck{$parent} or fail("Parent layer $parent is not loaded");
                 $ck = $ck->clone(); # Need to take a copy so we can re-use the checker later
+                $parent = $s2layer{$parent} or fail("Parent layer $parent is not loaded");
             }
             else {
                 $ck = $base_checker->clone();
@@ -132,11 +133,12 @@ task "Populating S2 layers", sub {
             };
             if ($@) { fail("Compile error: $@"); }
 
-            my $layer = WebDrove::S2::install_system_layer(\$compiled, $ck);
+            my $layer = WebDrove::S2::install_system_layer(\$compiled, $ck, $parent);
 
             my $layerid = $layer->layerid;
             my $uniq = $layer->uniq;
             $s2ck{$uniq} = $ck;
+            $s2layer{$uniq} = $layer;
 
             my $dir = $fn;
             $dir =~ s!/[^/]+$!!g;
