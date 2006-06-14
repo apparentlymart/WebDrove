@@ -215,7 +215,7 @@ sub layer_id_url {
 }
 
 sub pages {
-	my ($r, $site, $pageid) = @_;
+	my ($r, $site, $pageid, $mode) = @_;
 
 	my $siteid = $site->siteid;
 
@@ -268,20 +268,50 @@ sub pages {
 
 		if ($r->method eq 'GET') {
 
-			my @content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+			if ($mode eq 'layouts') {
 
-			return xml($r,
-				Elem("page",
-					Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
-					Attrib("local-id" => $page->pageid),
-					Elem("title" => $page->title),
-					Elem("type" => $page->type->name),
-					Elem("content", @content),
-					Elem("links",
-						Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
+				my $layouts = $page->s2_layouts();
+
+				return xml($r,
+					Elem("layers",
+						map {
+							Elem("layer",
+								Attrib("id" => layer_id_url($r, $_)),
+								Attrib("local-id" => $_->layerid),
+								$_->parent ? Attrib("parent" => layer_id_url($r, $_->parent)) : undef,
+								Elem("name" => $_->name),
+								Elem("type" => $_->type),
+								Elem("links",
+									Elem("detail" => layer_id_url($r, $_)),
+								),
+							),
+						} @$layouts,
 					),
-				),
-			);
+				);
+
+			}
+			elsif (! defined($mode)) {
+
+				my @content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
+
+				return xml($r,
+					Elem("page",
+						Attrib("id" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
+						Attrib("local-id" => $page->pageid),
+						Elem("title" => $page->title),
+						Elem("type" => $page->type->name),
+						Elem("content", @content),
+						Elem("links",
+							Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
+							Elem("layouts" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/layouts")),
+						),
+					),
+				);
+
+			}
+			else {
+				return logged_error_response(404, "Unknown page sub-section $mode");
+			}
 		}
 		elsif ($r->method eq 'PUT') {
 			my $clen = $r->header_in("Content-length");

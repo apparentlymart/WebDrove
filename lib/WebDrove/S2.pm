@@ -90,6 +90,8 @@ sub get_public_layers {
 		push @args, $layerid, $siteid;
 	}
 
+	$log->debug("Fetching public layers: Executing query $query with args ".join(',',@args));
+
 	my $dbh = WebDrove::DB::get_db_reader();
 	my $sth = $dbh->prepare($query);
 	$sth->execute(@args);

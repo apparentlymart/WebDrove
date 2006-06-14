@@ -8,6 +8,8 @@ use WebDrove::DB;
 use Storable;
 use Carp;
 
+my $log = WebDrove::Logging::get_logger();
+
 sub fetch {
     my ($class, $site, $layerid) = @_;
 
@@ -74,7 +76,7 @@ sub new {
         $db_do->("INSERT INTO s2layerinfo (layerid,siteid,infokey,value) VALUES (?,?,?,?)", $layerid, $siteid, $k, $layerinfo->{$k}) if defined($layerinfo->{$k}) or die("Failed to insert layerinfo $k");
     }
 
-    $db_do->("INSERT INTO s2layer (layerid,parentid,parentsiteid,siteid,type) VALUES (?,?,?,?,?)", $layerid, ($parent ? $parent->layerid : undef), (($parent && $parent->owner) ? $parent->owner->siteid : undef), ($site ? $site->siteid : 0), $layertype) or die("Failed to insert layer metadata");
+    $db_do->("INSERT INTO s2layer (layerid,parentid,parentsiteid,siteid,type) VALUES (?,?,?,?,?)", $layerid, ($parent ? $parent->layerid : undef), ($parent ? ($parent->owner ? $parent->owner->siteid : 0) : undef), ($site ? $site->siteid : 0), $layertype) or die("Failed to insert layer metadata");
 
     return fetch($class, $site, $layerid);
 }

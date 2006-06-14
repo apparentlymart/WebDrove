@@ -196,6 +196,13 @@ sub s2_object {
     return $self->{s2obj} = $type->construct_s2_object($self, $ctx);
 }
 
+sub s2_layouts {
+	my ($self, $layertype) = @_;
+
+	my $pagetype = $self->type();
+	return $pagetype->s2_layouts($layertype);
+}
+
 sub get_content_xml {
     my ($self, $xml) = @_;
 

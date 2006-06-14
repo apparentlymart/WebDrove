@@ -90,6 +90,13 @@ sub s2_core_layer {
     return $self->{s2core};
 }
 
+sub s2_layouts {
+	my ($self) = @_;
+
+	my $core = $self->s2_core_layer();
+	return $core->children("layout");
+}
+
 sub name {
     my ($self) = @_;
 
