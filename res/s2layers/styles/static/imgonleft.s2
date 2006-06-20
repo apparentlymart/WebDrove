@@ -1,16 +1,18 @@
 
 layerinfo "type" = "layout";
-layerinfo "name" = "Images on the Left";
+layerinfo "name" = "Picture on the Left";
 layerinfo "uniq" = "http://www.webdrove.org/ns/s2layers/page/static/imgonleft";
 
 function Page::print() {
-	println """<div style="float:left;">""";
-	foreach var Image i ($.images) {
-		if ($i.link_url != "") { print "<a href='"+ehtml($i.link_url)+"'>"; }
-		print "<img src='"+ehtml($i.url)+"' alt='"+ehtml($i.alt)+"' />";
-		if ($i.link_url != "") { print "</a>"; }
+	if ($.images) {
+		println """<div style="float:left;">""";
+		foreach var Image i ($.images) {
+			if ($i.link_url != "") { print "<a href='"+ehtml($i.link_url)+"'>"; }
+			print "<img src='"+ehtml($i.url)+"' alt='"+ehtml($i.alt)+"' />";
+			if ($i.link_url != "") { print "</a>"; }
+		}
+		println """</div>""";
 	}
-	println """</div>""";
     print $.content;
 }
 

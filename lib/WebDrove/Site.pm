@@ -135,6 +135,18 @@ sub get_pages {
 
 }
 
+sub get_images_by_ids {
+	my ($self, @images) = @_;
+
+	return WebDrove::Image->list_images_by_site_and_ids($self, @images);
+}
+
+sub get_image_by_id {
+	my ($self, $id) = @_;
+
+	return WebDrove::Image->fetch($self, $id);
+}
+
 sub delete_page {
 	my ($self, $page) = @_;
 

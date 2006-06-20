@@ -7,14 +7,15 @@ class Image {
     var string url;
     var string alt;
     var string link_url;
+    var int width;
+    var int height;
 }
 
 class Page {
     var string content "The page content as HTML.";
-    var Image[] images "An array of images for this page.";
+    var Image[] images "An image to display on this page.";
 
     function print() "Generate the page content; called by the system when a page needs to be rendered.";
-
 }
 
 function Page::print() {
