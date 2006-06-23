@@ -215,7 +215,7 @@ sub layer_id_url {
 }
 
 sub pages {
-	my ($r, $site, $pageid, $mode) = @_;
+	my ($r, $site, $pageid, $mode, @extra) = @_;
 
 	my $siteid = $site->siteid;
 
@@ -290,6 +290,23 @@ sub pages {
 				);
 
 			}
+			elsif ($mode eq 'images' && scalar(@extra) == 1) {
+
+				my $imageid = $extra[0] + 0;
+				my $image = WebDrove::Image->fetch($site, $imageid);
+
+				return 404 unless $image;
+
+				$r->content_type($image->mime_type);
+
+				WebDrove::Apache::Handler::http_header($r);
+				my $fh = $image->get_data_stream;
+				$r->send_fd($fh);
+				$fh->close();
+
+				return 200;
+
+			}
 			elsif (! defined($mode)) {
 
 				my @content = $page->get_content_xml(new WebDrove::Apache::AdminService::XMLBuilder());
@@ -305,6 +322,11 @@ sub pages {
 							Elem("detail" => abs_url($r, "/sites/$siteid/pages/".$page->pageid)),
 							Elem("layouts" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/layouts")),
 							Elem("style" => abs_url($r, "/sites/$siteid/styles/".$page->style->styleid)),
+							Elem("images",
+								Elem("add" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/images/add")),
+								Elem("disco" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/images")),
+								Elem("list" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/images")),
+							),
 						),
 					),
 				);
@@ -342,6 +364,30 @@ sub pages {
 
 			$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid));
 			return 202;
+		}
+		elsif ($r->method eq 'POST') {
+
+			my $clen = $r->header_in("Content-length");
+			return 400 if (!$clen);
+
+			my $data = "";
+			$r->read($data, $clen);
+
+			if ($mode eq 'images' && $extra[0] eq 'add') {
+				my $image = WebDrove::Image->new($site, $page, \$data);
+
+				if (defined($image)) {
+					$r->header_out("Location" => abs_url($r, "/sites/$siteid/pages/".$page->pageid."/images/".$image->imageid));
+					return 201;
+				}
+				else {
+					return 500;
+				}
+			}
+			else {
+				return 405;
+			}
+
 		}
 		elsif ($r->method eq 'DELETE') {
 			my $page = $site->get_page($pageid);

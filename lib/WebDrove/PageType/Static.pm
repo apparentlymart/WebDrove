@@ -26,7 +26,7 @@ sub s2_object {
         	'height' => $_->height,
         	'alt' => '',
         	'link_url' => '',
-        	'url' => '/_/img/u/'.($_->imageid+0).'.'.$_->format,
+        	'url' => $_->public_url,
         } } @$images ],
     };
 }

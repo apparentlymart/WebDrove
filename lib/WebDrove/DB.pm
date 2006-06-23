@@ -87,6 +87,9 @@ sub alloc_id {
     elsif ($area eq 'page') {
         $newmax = $dbh->selectrow_array("SELECT MAX(pageid) FROM page WHERE siteid=?", undef, $siteid);
     }
+    elsif ($area eq 'image') {
+        $newmax = $dbh->selectrow_array("SELECT MAX(imageid) FROM image WHERE siteid=?", undef, $siteid);
+    }
     else {
     	$log->logdie("Unknown counter area '$area'");
     }
