@@ -146,7 +146,23 @@ sub site_media {
 		http_header($r);
 		$ctx->set_print(sub { print $_[1]; });
 		$ctx->run("main_stylesheet()");
+		return 200;
 
+	}
+	elsif ($uri =~ m!^img/u/(\d+)\.([jgp][pin][gf])$!) {
+		my $imageid = $1+0;
+		my $format = $2;
+
+		my $image = $site->get_image_by_id($imageid);
+		return 404 unless ref $image;
+		return 404 unless $image->format eq $format;
+
+		$r->content_type($image->mime_type);
+		http_header($r);
+		my $fh = $image->get_data_stream();
+		$r->send_fd($fh);
+
+		return 200;
 	}
 	else {
 		return 404;
