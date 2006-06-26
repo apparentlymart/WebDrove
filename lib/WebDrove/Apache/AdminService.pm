@@ -68,7 +68,7 @@ sub root_service {
 sub abs_url {
     my ($r, $path) = @_;
 
-    return "http://".$r->server->server_hostname.$path;
+    return $WDConf::ADMINSVC_URL.$path;
 }
 
 sub not_found {
