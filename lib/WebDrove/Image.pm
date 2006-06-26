@@ -130,6 +130,13 @@ sub new {
 
 	my $imgpath = sprintf("%08x%08x", $siteid, $imageid);
 	$imgpath =~ s!(\w\w)!/$1!g;
+
+    my $madepath = File::Path::mkpath($basepath.$imgpath);
+    unless ($madepath) {
+	    $log->debug("Failed to create path $basepath$imgpath: $!");
+        return undef;
+	}
+
 	$imgpath .= ".".lc($type);
 
 	$log->debug("Storing image to $basepath$imgpath");
