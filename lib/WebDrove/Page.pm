@@ -181,6 +181,14 @@ sub s2_context {
     return $self->{s2ctx} if defined $self->{s2ctx};
 
     my $style = $self->style;
+    # TEMP: If the style has no layers, make a new one that works.
+    my $layers = $style->get_layers;
+    unless (@$layers) {
+        my $corelayer = $self->type->s2_core_layer();
+        my $site = $self->owner;
+        $style = WebDrove::S2::Style->new($site, $corelayer);
+        $site->db_do("UPDATE page SET styleid = ? WHERE siteid = ? and pageid = ?", $style->styleid, $site->siteid, $self->pageid);
+    }
 
     return $self->{s2ctx} = $style->make_context();
 }
