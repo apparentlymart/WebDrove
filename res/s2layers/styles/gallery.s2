@@ -1,0 +1,44 @@
+
+layerinfo "type" = "core";
+layerinfo "name" = "Gallery Page Core";
+layerinfo "uniq" = "http://www.webdrove.org/ns/s2layers/page/gallery";
+
+class Image {
+    var string url;
+    var int width;
+    var int height;
+    var string title;
+    var string description;
+}
+
+class Page {
+    var string content "The page content as HTML.";
+    var Image[] images "An image to display on this page.";
+
+    function print() "Generate the page content; called by the system when a page needs to be rendered.";
+}
+
+function Page::print() {
+    print $.content;
+
+    """<table style="width:100%;">""";
+
+    foreach var Image i ($.images) {
+	    "<tr><td>";
+
+	    if ($i.url != "") {
+		    "<img src='"+ehtml($i.url)+"' width='"+ehtml($i.url)+"' height='"+ehtml($i.url)+"' />";
+		}
+		"</td>";
+	    "<td>";
+
+	    if ($i.title) {
+		    "<h2 style='font-size:1.1em;font-weight:bold;'>"+ehtml($i.title)+"</h2>";
+	    }
+
+	    print $i.description+"</td></tr>";
+    }
+
+    """</table>""";
+}
+
