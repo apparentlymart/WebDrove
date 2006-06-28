@@ -38,7 +38,7 @@ sub new {
 
 		$log->debug("Image is of type $type. Converting to JPEG.");
 
-		my $gotmagick = eval { require Image::Magick; 1; };
+		my $gotmagick = eval { require Image::Magick; $Image::Size::NO_CACHE = 1; 1; };
 		unless ($gotmagick) {
 			$log->error("Image::Magick is not available. Bailing out.");
 			return undef;
@@ -80,7 +80,7 @@ sub new {
 
 		$log->debug("Image is too large. Scaling down.");
 
-		my $gotmagick = eval { require Image::Magick; 1; };
+		my $gotmagick = eval { require Image::Magick; $Image::Size::NO_CACHE = 1; 1; };
 		unless ($gotmagick) {
 			$log->error("Image::Magick is not available. Bailing out.");
 			return undef;
@@ -113,10 +113,10 @@ sub new {
 		$outfh->close();
 		$infh->close();
 
-		$type = "JPG";
-
 		$log->debug("Resize succeeded.");
 
+		# Get the new w/h/format
+		($w, $h, $type) = Image::Size::imgsize($data);
 
 	}
 
