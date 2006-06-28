@@ -8,6 +8,8 @@ layerinfo "name" = "WebDrove Global Builtins";
 layerinfo "majorversion" = 1;
 
 function builtin ehtml(string s) : string;
+function builtin int(string s) : int;
+function builtin string(int s) : string;
 
 class int
 "An integer number.  This isn't really a class, as suggested by its lower-case name.  Parameters of type int pass by value, unlike all variables of real object types, which pass by reference.  Instead, this is just a pseudo-class which provides convenience methods on instances of integers.  The other pseudo-class is [class[string]]."

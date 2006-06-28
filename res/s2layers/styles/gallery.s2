@@ -27,7 +27,7 @@ function Page::print() {
 	    "<tr><td>";
 
 	    if ($i.url != "") {
-		    "<img src='"+ehtml($i.url)+"' width='"+ehtml($i.url)+"' height='"+ehtml($i.url)+"' />";
+		    "<img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"' />";
 		}
 		"</td>";
 	    "<td>";
