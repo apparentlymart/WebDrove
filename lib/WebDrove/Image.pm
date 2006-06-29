@@ -2,10 +2,13 @@
 package WebDrove::Image;
 
 use WebDrove;
+use WebDrove::ImageManipulation;
 use Image::Size;
 use File::Path;
 use IO::File;
 use strict;
+
+$Image::Size::NO_CACHE = 1;
 
 # FIXME: Can't instatiate logger here because this gets called before the logger library is loaded! :(
 #my $log = WebDrove::Logging::get_logger();
@@ -33,43 +36,14 @@ sub new {
 
 	my ($w, $h, $type) = Image::Size::imgsize($data);
 
+	$log->debug("Image is a $w x $h $type.");
+
 	if ($type !~ /^(GIF|JPG|PNG)$/i) {
 		# Convert the image to JPEG format on the user's behalf
 
 		$log->debug("Image is of type $type. Converting to JPEG.");
 
-		my $gotmagick = eval { require Image::Magick; $Image::Size::NO_CACHE = 1; 1; };
-		unless ($gotmagick) {
-			$log->error("Image::Magick is not available. Bailing out.");
-			return undef;
-		}
-
-		my $infh = IO::File->new_tmpfile();
-		my $outfh = IO::File->new_tmpfile();
-
-		unless ($infh && $outfh) {
-			$log->error("Failed to create temporary files for conversion. Bailing out.");
-			return undef;
-		}
-
-		binmode($infh);
-		binmode($outfh);
-
-		$infh->write($$data, length($$data));
-		$infh->seek(0, 0);
-
-		my $image = Image::Magick->new;
-		$image->Read(file => $infh);
-		$image->Write(file => $outfh, filename => "whatever.jpg");
-
-		$outfh->seek(0, 0);
-
-		$$data = "";
-		$outfh->read($$data, 4096, length($$data)) while (! $outfh->eof);
-
-		$outfh->close();
-		$infh->close();
-
+		return undef unless WebDrove::ImageManipulation::convert($data, "jpg");
 		$type = "JPG";
 
 		$log->debug("Conversion succeeded.");
@@ -80,43 +54,11 @@ sub new {
 
 		$log->debug("Image is too large. Scaling down.");
 
-		my $gotmagick = eval { require Image::Magick; $Image::Size::NO_CACHE = 1; 1; };
-		unless ($gotmagick) {
-			$log->error("Image::Magick is not available. Bailing out.");
-			return undef;
-		}
+		return undef unless WebDrove::ImageManipulation::resize($data, "250x250");
 
-		my $infh = IO::File->new_tmpfile();
-		my $outfh = IO::File->new_tmpfile();
-
-		unless ($infh && $outfh) {
-			$log->error("Failed to create temporary files for resize. Bailing out.");
-			return undef;
-		}
-
-		binmode($infh);
-		binmode($outfh);
-
-		$infh->write($$data, length($$data));
-		$infh->seek(0, 0);
-
-		my $image = Image::Magick->new;
-		$image->Read(file => $infh);
-		$image->Resize(geometry => "250x250");
-		$image->Write(file => $outfh, filename => "whatever.jpg");
-
-		$outfh->seek(0, 0);
-
-		$$data = "";
-		$outfh->read($$data, 4096, length($$data)) while (! $outfh->eof);
-
-		$outfh->close();
-		$infh->close();
-
-		$log->debug("Resize succeeded.");
-
-		# Get the new w/h/format
 		($w, $h, $type) = Image::Size::imgsize($data);
+
+		$log->debug("Resize succeeded. New size is $w x $h");
 
 	}
 
