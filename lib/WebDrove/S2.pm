@@ -142,6 +142,17 @@ sub Page__print_body {
     #print STDERR Data::Dumper::Dumper($page);
 }
 
+sub Page__external_props {
+	my ($ctx, $this, $schema) = @_;
+
+	return {} unless defined($WDConf::S2_CUSTOM_PROPS{$schema});
+
+    my $page = $this->{_page};
+	my $handler = $WDConf::S2_CUSTOM_PROPS{$schema};
+
+	return $handler->($ctx, $page, $schema);
+}
+
 sub resource_url_impl {
 	my ($ctx, $fn) = @_;
 

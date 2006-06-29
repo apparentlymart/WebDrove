@@ -22,6 +22,8 @@ class Page {
     function print() "Entry point function; called by the system to render a page.";
     function builtin print_body() "Render the body content of the page.";
     function builtin print_head() "Produce HTML HEAD content necessary for this page.";
+    function print_footer() "Produce some HTML to go in the footer area of the page.";
+    function builtin external_props(string schema) : string{} "Return a set of externally-defined properties conforming to some schema.";
 }
 
 function builtin resource_url_impl(string fn) : string; # FIXME: Do this better
@@ -102,6 +104,11 @@ function Page::print() {
 </div>
 
 <div id="bottom">
+""";
+
+	$this->print_footer();
+
+"""
 </div>
 
 </div>
@@ -110,6 +117,10 @@ function Page::print() {
 
 """;
 
+}
+
+function Page::print_footer() {
+	# Does nothing in core. Layouts can override.
 }
 
 function main_stylesheet() {
