@@ -134,9 +134,10 @@ sub Page__print_body {
     #$ctx->_print($obj->{content});
 
     my $page = $this->{_page};
+    my $s2pagebody = $this->{_s2pagebody};
     my $pctx = $page->s2_context();
     $pctx->set_print(sub { print $_[1]; });
-    $pctx->run("Page::print()", $page->s2_object());
+    $pctx->run("Page::print()", $s2pagebody);
 
     #print STDERR Data::Dumper::Dumper($pctx);
     #print STDERR Data::Dumper::Dumper($page);

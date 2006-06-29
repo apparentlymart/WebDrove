@@ -5,7 +5,9 @@ use strict;
 use WebDrove::Image;
 
 sub s2_object {
-    my ($class, $page, $ctx, $tablename) = @_;
+    my ($class, $page, $ctx, $tablename, $pathbits) = @_;
+
+	return undef if @$pathbits;
 
 	my $log = WebDrove::Logging::get_logger();
 	$log->debug("Preparing S2 object for static page ".$page->pageid);

@@ -79,15 +79,21 @@ sub site_content {
         }
 
         my $pagename = undef;
+        my @pathbits = ();
 
         if ($uri eq '/') {
             $pagename = "Home"; # FIXME: Don't hardcode "Home" as the homepage
         }
-        elsif ($uri =~ m!^/([^/]+)/$!) {
+        elsif ($uri !~ m!/$!) {
+        	return 404;
+        }
+        elsif ($uri =~ m!^/([^/]+)/(.*)$!) {
             $pagename = $1;
+            my $rest = $2;
             return 404 if $pagename eq 'Home';
             $pagename =~ s/\+/ /g;
             $pagename =~ s/%([0-9a-fA-F][0-9a-fA-F])/pack("c",hex($1))/eg;
+			@pathbits = split(m!/!, $rest) if $rest;
         }
         else {
             return 404;
@@ -95,6 +101,9 @@ sub site_content {
 
         my $page = $site->get_page_by_title($pagename);
         return 404 unless $page;
+
+        my $s2pagebody = $page->s2_object(\@pathbits);
+        return 404 unless $s2pagebody;
 
         $r->content_type("text/html");
         http_header($r);
@@ -120,6 +129,8 @@ sub site_content {
             page_title => $page->title,
             nav => \@s2pages,
             _page => $page,
+            _pathbits => \@pathbits,
+            _s2pagebody => $s2pagebody,
         };
 
         $ctx->set_print(sub { print $_[1]; });

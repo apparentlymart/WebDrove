@@ -194,14 +194,14 @@ sub s2_context {
 }
 
 sub s2_object {
-    my ($self) = @_;
+    my ($self, $pathbits) = @_;
 
     return $self->{s2obj} if defined $self->{s2obj};
 
     my $type = $self->type;
     my $ctx = $self->s2_context();
 
-    return $self->{s2obj} = $type->construct_s2_object($self, $ctx);
+    return $self->{s2obj} = $type->construct_s2_object($self, $ctx, $pathbits);
 }
 
 sub s2_layouts {

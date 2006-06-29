@@ -71,7 +71,7 @@ sub load_metadata {
 }
 
 sub construct_s2_object {
-    my ($self, $page, $ctx) = @_;
+    my ($self, $page, $ctx, $pathbits) = @_;
 
     $self->load_metadata();
     my $pkg = $self->{pkg};
@@ -80,7 +80,7 @@ sub construct_s2_object {
     return undef unless $pkg;
     return undef if $name =~ /\W/;
 
-    return $pkg->s2_object($page, $ctx, "page_$name");
+    return $pkg->s2_object($page, $ctx, "page_$name", $pathbits);
 }
 
 sub s2_core_layer {
