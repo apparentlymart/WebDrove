@@ -18,6 +18,9 @@ sub _load_magick {
 sub convert {
 	my ($dataref, $format) = @_;
 
+	my $log = WebDrove::Logging::get_logger();
+	$log->debug("Doing image conversion to $format.");
+
 	return undef unless _load_magick();
 
 	my $img = Image::Magick->new();
@@ -28,11 +31,16 @@ sub convert {
 		$log->error("Image conversion to $format failed.");
 	}
 
+	$log->debug("Image conversion succeeded.");
+
 	return $$dataref ne '';
 }
 
 sub resize {
 	my ($dataref, $geometry) = @_;
+
+	my $log = WebDrove::Logging::get_logger();
+	$log->debug("Doing image resize to $geometry.");
 
 	return undef unless _load_magick();
 
@@ -44,6 +52,8 @@ sub resize {
 	if ($$dataref eq '') {
 		$log->error("Image resize to $geometry failed.");
 	}
+
+	$log->debug("Image resize succeeded.");
 
 	return $$dataref ne '';
 }
