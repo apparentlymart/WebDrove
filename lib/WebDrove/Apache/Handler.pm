@@ -67,10 +67,10 @@ sub site_content {
         die "No SITE_SELECTOR is configured; can't continue!" if (ref $WDConf::SITE_SELECTOR ne 'CODE');
 
         my $siteid = $WDConf::SITE_SELECTOR->($r);
-        return 404 unless ($siteid);
+        return http_404_error($r, "Site selector returned undef") unless ($siteid);
 
         my $site = WebDrove::Site->fetch($siteid);
-        return 404 unless ($site);
+        return http_404_error($r, "Can't load site $siteid") unless ($site);
 
         my $uri = $r->uri;
 
@@ -90,17 +90,17 @@ sub site_content {
         elsif ($uri =~ m!^/([^/]+)/(.*)$!) {
             $pagename = $1;
             my $rest = $2;
-            return 404 if $pagename eq 'Home';
+            return http_404_error($r, "The page name 'Home' is reserved") if $pagename eq 'Home';
             $pagename =~ s/\+/ /g;
             $pagename =~ s/%([0-9a-fA-F][0-9a-fA-F])/pack("c",hex($1))/eg;
 			@pathbits = split(m!/!, $rest) if $rest;
         }
         else {
-            return 404;
+            return http_404_error($r, "Nonsense URI");
         }
 
         my $page = $site->get_page_by_title($pagename);
-        return 404 unless $page;
+        return http_404_error($r, "Can't find page for name '$pagename'") unless $page;
 
         my $s2pagebody = $page->s2_object(\@pathbits);
         return 404 unless $s2pagebody;
@@ -186,6 +186,16 @@ sub http_header {
     return if ($r->notes("webdrove_sent_header"));
     $r->send_http_header();
     $r->notes("webdrove_sent_header", 1);
+}
+
+sub http_404_error {
+    my ($r, $reason) = @_;
+    $r->status(404);
+    $r->content_type("text/html");
+    http_header($r);
+    print "<p>Page not found.</p>";
+    $log->error("404 Not Found for ".$r->uri.": ".$reason);
+    return 200;
 }
 
 sub ehtml {
