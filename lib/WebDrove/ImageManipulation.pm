@@ -23,7 +23,7 @@ sub convert {
 
 	return undef unless _load_magick();
 
-	my $img = Image::Magick->new();
+	my $img = Graphics::Magick->new();
 	$img->BlobToImage($$dataref);
 	($$dataref) = $img->ImageToBlob(magick => $format);
 
@@ -44,7 +44,7 @@ sub resize {
 
 	return undef unless _load_magick();
 
-	my $img = Image::Magick->new();
+	my $img = Graphics::Magick->new();
 	$img->BlobToImage($$dataref);
 	$img->Resize(geometry => $geometry);
 	($$dataref) = $img->ImageToBlob();
