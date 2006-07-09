@@ -111,6 +111,7 @@ sub service_handler {
 	                Elem("pages",
 	                	Elem("list" => abs_url($r, "/sites/$siteid/pages")),
 	                	Elem("create" => abs_url($r, "/sites/$siteid/pages/add")),
+	                	Elem("reorder" => abs_url($r, "/sites/$siteid/pages/reorder")),
 	                ),
 	            ),
                 Elem("disco",
@@ -256,6 +257,35 @@ sub pages {
 
 		$log->debug("Created new page ".$page->pageid." for site ".$site->siteid);
 		return 201;
+	}
+	elsif ($pageid eq 'reorder') {
+
+		$log->debug("Reordering pages for site ".$site->siteid);
+
+		return logged_error_response(405, "Invalid request method ".$r->method." for page reorder request") if $r->method ne 'POST';
+
+		my $clen = $r->header_in("Content-length");
+		return logged_error_response(400, "Missing content length in page add request") if (!$clen);
+
+		my $data = "";
+		$r->read($data, $clen);
+
+		my $p = new XML::DOM::Parser();
+		my $doc = $p->parse($data);
+
+		my $pages = $doc->getDocumentElement()->getElementsByTagName("page");
+
+		my @pages = ();
+
+		for (my $i = 0; $i < $pages->getLength; $i++) {
+			my $pageelem = $pages->item($i);
+			push @pages, $site->get_page($pageelem->getAttribute("localid"));
+		}
+
+		$site->set_page_order(\@pages);
+
+		return 202;
+
 	}
 
 	$pageid += 0;

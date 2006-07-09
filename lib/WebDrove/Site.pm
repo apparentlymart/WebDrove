@@ -7,6 +7,8 @@ use WebDrove::Page;
 use WebDrove::S2::Style;
 use strict;
 
+my $log = WebDrove::Logging::get_logger();
+
 sub fetch {
     my ($class, $siteid) = @_;
 
@@ -133,6 +135,20 @@ sub get_pages {
 
 	return WebDrove::Page->list_pages_by_site($self);
 
+}
+
+sub set_page_order {
+	my ($self, $pages) = @_;
+
+	$log->debug("I have ".scalar(@$pages)." pages in my sortorder.");
+
+	my $idx = 0;
+	foreach my $page (@$pages) {
+		$log->debug("Setting sort index to $idx for $page");
+		$page->set_sort_index($idx++);
+	}
+
+	return 1; # FIXME: Detect failure and return false?
 }
 
 sub get_images_by_ids {

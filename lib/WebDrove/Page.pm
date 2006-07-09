@@ -225,4 +225,16 @@ sub set_content_xml {
 	return $type->set_content_xml($self, $elem);
 }
 
+sub set_sort_index {
+	my ($self, $idx) = @_;
+
+	my $site = $self->owner;
+	my $siteid = $site->siteid;
+	my $pageid = $self->pageid;
+
+	$log->debug("Page $pageid from site $siteid now has sort index $idx");
+
+	return $site->db_do("UPDATE page SET sort=? WHERE siteid=? AND pageid=?", $idx+0, $siteid, $pageid);
+}
+
 1;
