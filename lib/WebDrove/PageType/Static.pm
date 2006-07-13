@@ -5,7 +5,7 @@ use strict;
 use WebDrove::Image;
 
 sub s2_object {
-    my ($class, $page, $ctx, $tablename, $pathbits) = @_;
+    my ($class, $page, $ctx, $tablename, $pathbits, $nav) = @_;
 
 	return undef if @$pathbits;
 

@@ -7,6 +7,7 @@ use WebDrove;
 use WebDrove::S2;
 use WebDrove::DB;
 use WebDrove::Site;
+use WebDrove::Apache::Request;
 use WebDrove::Apache::AdminService;
 use S2::Runtime::OO;
 use Apache::Constants qw(:common REDIRECT HTTP_NOT_MODIFIED
@@ -102,7 +103,9 @@ sub site_content {
         my $page = $site->get_page_by_title($pagename);
         return http_404_error($r, "Can't find page for name '$pagename'") unless $page;
 
-        my $s2pagebody = $page->s2_object(\@pathbits);
+		my $nav = new WebDrove::Apache::Request($r, $site);
+
+        my $s2pagebody = $page->s2_object(\@pathbits, $nav);
         return 404 unless $s2pagebody;
 
         $r->content_type("text/html");
