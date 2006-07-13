@@ -127,20 +127,11 @@ sub Page__print_head {
 sub Page__print_body {
     my ($ctx, $this) = @_;
 
-    # TEMP HACK: Make this work for the demo
-    #my $page = $this->{_page};
-    #my $obj = $page->s2_object();
-    #$ctx->_print("<img src='".ehtml($ctx,$obj->{_imgurl})."' style='float: right; margin-left: 5px; margin-bottom: 5px;' alt='' />") if $obj->{_imgurl};
-    #$ctx->_print($obj->{content});
-
     my $page = $this->{_page};
     my $s2pagebody = $this->{_s2pagebody};
     my $pctx = $page->s2_context();
     $pctx->set_print(sub { print $_[1]; });
-    $pctx->run("Page::print()", $s2pagebody);
-
-    #print STDERR Data::Dumper::Dumper($pctx);
-    #print STDERR Data::Dumper::Dumper($page);
+    $pctx->run($s2pagebody->{_type}."::print()", $s2pagebody);
 }
 
 sub Page__external_props {
