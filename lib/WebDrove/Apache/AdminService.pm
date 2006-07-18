@@ -161,7 +161,7 @@ sub as_string {
 
     $ret .= "<$tagname";
     foreach my $k (keys %$attr) {
-        $ret .= " $k=\"".($attr->{$k} ? exml($attr->{$k}) : $k)."\"";
+        $ret .= " $k=\"".($attr->{$k} ? exml($attr->{$k}) : '')."\"";
     }
     if (scalar(@$kids) == 0) {
         $ret .= " />";
