@@ -134,6 +134,7 @@ sub site_content {
             _page => $page,
             _pathbits => \@pathbits,
             _s2pagebody => $s2pagebody,
+            _site => $site,
         };
 
         $ctx->set_print(sub { print $_[1]; });
