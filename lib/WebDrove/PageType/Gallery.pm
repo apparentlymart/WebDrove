@@ -7,7 +7,7 @@ use WebDrove::Image;
 sub s2_object {
     my ($class, $page, $ctx, $tablename, $pathbits) = @_;
 
-	return undef if @$pathbits;
+	return undef if scalar(@$pathbits) > 1 ;
 
 	my $log = WebDrove::Logging::get_logger();
 	$log->debug("Preparing S2 object for gallery page ".$page->pageid);
@@ -19,28 +19,63 @@ sub s2_object {
     my $pageid = $page->pageid;
 
     my $pagebody = $class->page_body($page, $tablename);
-    my $images = $class->get_images($page, $tablename);
+    
+    if(scalar(@$pathbits) == 1)
+    {
+	my $imageid = $pathbits->[0];
+	
+	$imageid = $imageid + 0;
+	my $size = "l";
+	my ($title, $desc,$img) = $class->get_image($page, $tablename, $imageid, $size);
+	
+	return undef unless $img;
+	
+	my $s2image = ();
+	
+	$s2image = {
+		'_type' => 'Image',
+		'width' => $img->width($size),
+		'height' => $img->height($size),
+		'url' => $img->public_url($size),
+		'title' => $title,
+		'description' => $desc,
+		'id' => $img->imageid,
+	};
+		
+	  return {
+        '_type' => 'ImagePage',
+        'content' => $pagebody,
+        'image' => $s2image,
+	};
+    }
+    else
+    {
+	my $size = "s";
+	my $images = $class->get_images($page, $tablename, $size);
 
 	my @s2images = ();
 
 	foreach my $img (@$images) {
 		next unless $img->[0] || $img->[1] || $img->[2];
-
+		
 		push @s2images, {
 			'_type' => 'Image',
-			'width' => $img->[2] ? $img->[2]->width : 0,
-			'height' => $img->[2] ? $img->[2]->height : 0,
-			'url' => $img->[2] ? $img->[2]->public_url : "",
+			'width' => $img->[2] ? $img->[2]->width($size) : 0,
+			'height' => $img->[2] ? $img->[2]->height($size) : 0,
+			'url' => $img->[2] ? $img->[2]->public_url($size) : "",
 			'title' => $img->[0],
 			'description' => $img->[1],
+			'id' => $img->[2] ? $img->[2]->imageid : "",
 		};
 	}
-
-    return {
-        '_type' => 'Page',
+	
+	  return {
+        '_type' => 'ThumbsPage',
         'content' => $pagebody,
         'images' => \@s2images,
     };
+   }
+  
 }
 
 sub get_content_xml {
@@ -128,7 +163,7 @@ sub page_body {
 }
 
 sub get_images {
-	my ($class, $page, $tablename) = @_;
+	my ($class, $page, $tablename,$size) = @_;
 
 	my $log = WebDrove::Logging::get_logger();
 	$log->debug("Fetching images");
@@ -156,6 +191,30 @@ sub get_images {
 
 	return \@ret;
 
+}
+
+sub get_image {
+	my ($class, $page, $tablename, $imageid, $size) = @_;
+
+	my $log = WebDrove::Logging::get_logger();
+	$log->debug("Fetching image $imageid ($size)");
+
+	my $site = $page->owner;
+	my $siteid = $site->siteid;
+	my $pageid = $page->pageid;
+
+	my ($title, $desc, $imagesiteid)  = $site->db_selectrow_array("SELECT title,description,imagesiteid FROM ${tablename}_image WHERE siteid=? AND pageid=? AND imageid=? ORDER BY slot",$siteid,$pageid, $imageid);
+	
+	$log->debug("Got ($title, $desc, $imagesiteid)");
+	
+	return undef unless $imagesiteid;
+
+	my $image = undef;
+
+	my $imagesite = WebDrove::Site->fetch($imagesiteid);
+	$image = $imagesite->get_image_by_id($imageid);
+	
+	return ($title, $desc, $image);
 }
 
 1;

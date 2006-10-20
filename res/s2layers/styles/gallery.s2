@@ -7,27 +7,83 @@ class Image {
     var string url;
     var int width;
     var int height;
+    var int id;
     var string title;
     var string description;
+    
 }
 
 class Page {
     var string content "The page content as HTML.";
-    var Image[] images "An image to display on this page.";
 
     function print() "Generate the page content; called by the system when a page needs to be rendered.";
 }
 
-function Page::print() {
+class ThumbsPage extends Page 
+{
+	var Image[] images "The images to display on this page.";
+}
+
+property int thumbs_per_page {
+}
+
+set thumbs_per_page = 4;
+
+
+class ImagePage extends Page
+{
+	var Image image "An image to display on this page.";
+}
+
+function ThumbsPage::print() {
     print $.content;
 
-    """<table style="width:100%;">""";
-
+    """<table style="width:100%;" class="thumbslist"><tr>""";
+	var int row = 1;
     foreach var Image i ($.images) {
+	    "<td>";
+
+	    if ($i.url != "") {
+		    "<a href='"+ehtml(string($i.id))+"/'><img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"'  style='border : 0' /></a>";
+		}
+		"</td>";
+	    "<td>";
+
+	    if ($i.title) {
+		    "<h2 style='font-size:1.1em;font-weight:bold;'>"+ehtml($i.title)+"</h2>";
+	    }
+
+	    print $i.description+"</td>";
+		if($row == $*thumbs_per_page)
+			{
+				$row = 1;
+				"</tr><tr>";
+			}
+			else
+			{
+				$row++;
+			}
+	    
+    }
+    if($row == 1)
+    {
+	"</tr>";
+    }
+    
+
+    """</table>""";
+}
+
+
+function ImagePage::print() {
+    print $.content;
+    """<table style="width:100%;" class="imagetable">""";
+
+	var Image i = $.image;
 	    "<tr><td>";
 
 	    if ($i.url != "") {
-		    "<img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"' />";
+		    "<img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"' style='border : 0' />";
 		}
 		"</td>";
 	    "<td>";
@@ -37,8 +93,7 @@ function Page::print() {
 	    }
 
 	    print $i.description+"</td></tr>";
-    }
 
     """</table>""";
+    """<p><a href="../">Back to thumbnails</a>""";
 }
-

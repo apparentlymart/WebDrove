@@ -43,10 +43,17 @@ sub resize {
 	$log->debug("Doing image resize to $geometry.");
 
 	return undef unless _load_magick();
-
+	$log->debug("Loaded image magick");
+	
 	my $img = Graphics::Magick->new();
-	$img->BlobToImage($$dataref);
+	my $imgerror = $img->BlobToImage($$dataref);
+	if($imgerror)
+	{
+		$log->debug("Error loading blob : $imgerror");
+		return undef;
+	}
 	$img->Resize(geometry => $geometry);
+	$log->debug("Done Resize");
 	($$dataref) = $img->ImageToBlob();
 
 	if ($$dataref eq '') {

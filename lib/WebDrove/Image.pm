@@ -16,11 +16,24 @@ $Image::Size::NO_CACHE = 1;
 sub fetch {
 	my ($class, $site, $imageid) = @_;
 
-    my $meta = $site->db_selectrow_hashref("SELECT * FROM image WHERE siteid=? AND imageid=?", $site->siteid, $imageid);
-    return undef unless $meta;
+	my $log = WebDrove::Logging::get_logger();
+	
+    my $sth = $site->db_prepare("SELECT * FROM image WHERE siteid=? AND imageid=?");
+    $sth->execute($site->siteid, $imageid);
+    
+    my %sizes = {};
+    while (my $meta = $sth->fetchrow_hashref()) {
+	$sizes{$meta->{size}} = $meta;
+	$log->debug("Image for ".$meta->{size}." ".$sizes{$meta->{size}}{"width"}."x".$sizes{$meta->{size}}{"height"});
+    }
+    
+    $sizes{"m"}{sizes} = \%sizes;
+    my $meta = $sizes{"m"};
+    
     $meta->{owner} = $site;
     $meta->{page} = $meta->{pageid} ? WebDrove::Page->fetch($site, $meta->{pageid}) : undef;
 
+	$log->debug("Set default to ".$meta->{"width"}." x ".$meta->{"height"});
     return $class->_new_from_meta($meta);
 }
 
@@ -32,36 +45,6 @@ sub new {
 	return undef unless $site && $page;
 	return undef unless ref $data eq 'SCALAR';
 
-	$log->debug("Creating new image.");
-
-	my ($w, $h, $type) = Image::Size::imgsize($data);
-
-	$log->debug("Image is a $w x $h $type.");
-
-	if ($type !~ /^(GIF|JPG|PNG)$/i) {
-		# Convert the image to JPEG format on the user's behalf
-
-		$log->debug("Image is of type $type. Converting to JPEG.");
-
-		return undef unless WebDrove::ImageManipulation::convert($data, "jpg");
-		$type = "JPG";
-
-		$log->debug("Conversion succeeded.");
-
-	}
-
-	if ($w > 250 || $h > 250) {
-
-		$log->debug("Image is too large. Scaling down.");
-
-		return undef unless WebDrove::ImageManipulation::resize($data, "250x250");
-
-		($w, $h, $type) = Image::Size::imgsize($data);
-
-		$log->debug("Resize succeeded. New size is $w x $h");
-
-	}
-
 	my $basepath = $WDConf::SITE_IMAGE_PATH;
 
 	my $siteid = $site ? $site->siteid : 0;
@@ -70,15 +53,37 @@ sub new {
 
 	$log->debug("Allocated imageid $imageid for page $pageid on site $siteid.");
 
+	my ($w, $h, $type);
+	foreach(qw(l m s))
+	{
+		($w, $h, $type) = $class->get_scaled_image($site, $page, $data, $_);
+		return undef unless $data;
+		my $saved = $class->save_image($site, $page, $data, $_, $siteid, $pageid, $imageid, $w, $h, $type);
+		return undef unless $saved;
+	}
+	
+	return $class->fetch($site, $imageid);
+}
+
+sub save_image
+{
+	my ($class, $site, $page, $data, $size, $siteid, $pageid, $imageid, $w, $h, $type) = @_;
+	
+	my $log = WebDrove::Logging::get_logger();
+	
+	my $basepath = $WDConf::SITE_IMAGE_PATH;
+	
 	my $imgpath = sprintf("%08x%08x", $siteid, $imageid);
 	$imgpath =~ s!(\w\w)!/$1!g;
 
-    my $madepath = File::Path::mkpath($basepath.$imgpath);
-    unless ($madepath) {
-	    $log->debug("Failed to create path $basepath$imgpath: $!");
-        return undef;
+	my $madepath = File::Path::mkpath($basepath.$imgpath);
+	unless (-d $basepath.$imgpath) {
+		$log->debug("Failed to create path $basepath$imgpath: $!");
+		return undef;
 	}
-
+	
+	if(lc($size) eq "s" || lc($size) eq "l") { $imgpath.="-".lc($size); }
+	
 	$imgpath .= ".".lc($type);
 
 	$log->debug("Storing image to $basepath$imgpath");
@@ -93,7 +98,7 @@ sub new {
 	print $fh $$data;
 
 	$log->debug("Creating DB row...");
-	my $success = $site->db_do("INSERT INTO image (imageid, siteid, pageid, width, height, format) VALUES (?,?,?,?,?,?)", $imageid, $siteid, $pageid, $w, $h, lc($type));
+	my $success = $site->db_do("INSERT INTO image (imageid, siteid, pageid, size, width, height, format) VALUES (?,?,?,?,?,?,?)", $imageid, $siteid, $pageid, lc($size), $w, $h, lc($type));
 
 	unless ($success) {
 		$log->error("Failed to create DB row for image $imageid for page $pageid on site $siteid");
@@ -102,11 +107,63 @@ sub new {
 
 	$log->debug("Image creation succeeded.");
 
-	return $class->fetch($site, $imageid);
+	return 1;
+}
+
+sub get_scaled_image
+{
+	my ($class, $site, $page, $data, $size) = @_;
+
+	my $log = WebDrove::Logging::get_logger();
+
+	return undef unless $site && $page;
+	return undef unless ref $data eq 'SCALAR';
+
+	$log->debug("Creating new image.");
+
+	my ($w, $h, $type) = Image::Size::imgsize($data);
+
+	$log->debug("Image is a $w x $h $type.");
+	
+	my ($nw, $nh) = @{{
+		"s" => [100,100], "m" => [250, 250], "l" => [700, 700]
+	}->{$size}};
+	
+	
+	if ($type !~ /^(GIF|JPG|PNG)$/i) {
+		# Convert the image to JPEG format on the user's behalf
+
+		$log->debug("Image is of type $type. Converting to JPEG.");
+
+		return undef unless WebDrove::ImageManipulation::convert($data, "jpg");
+		$type = "JPG";
+
+		$log->debug("Conversion succeeded.");
+
+	}
+	
+	
+
+	if ($w > $nw || $h > $nh) {
+
+		$log->debug("Image is too large. Scaling down.");
+
+		return undef unless WebDrove::ImageManipulation::resize($data, "${nw}x${nh}");
+
+		($w, $h, $type) = Image::Size::imgsize($data);
+
+		$log->debug("Resize succeeded. New size is $w x $h");
+
+	}
+	
+	return($w, $h, $type);
+
 }
 
 sub filename {
-	my ($self) = @_;
+	my ($self, $size) = @_;
+
+	$size ||= "m";
 
 	my $siteid = $self->owner ? $self->owner->siteid : 0;
 	my $imageid = $self->imageid;
@@ -114,8 +171,14 @@ sub filename {
 
 	my $imgpath = sprintf("%08x%08x", $siteid, $imageid);
 	$imgpath =~ s!(\w\w)!/$1!g;
+	
+	if(lc($size) eq "s" || lc($size) eq "l") { $imgpath.="-".lc($size); }
+	
+	
 	$imgpath .= ".".lc($format);
-
+	
+	
+	
 	return $WDConf::SITE_IMAGE_PATH.$imgpath;
 }
 
@@ -170,10 +233,14 @@ sub _new_from_meta {
 }
 
 sub width {
-	return $_[0]->{width}+0;
+	my ($self, $size) = @_;
+	$size ||= "m";
+	return $self->{sizes}{$size}{width}+0;
 }
 sub height {
-	return $_[0]->{height}+0;
+	my ($self, $size) = @_;
+	$size ||= "m";
+	return $self->{sizes}{$size}{height}+0;
 }
 sub format {
 	return $_[0]->{format};
@@ -186,14 +253,16 @@ sub mime_type {
 }
 
 sub get_data_stream {
-	my ($self) = @_;
+	my ($self, $size) = @_;
 
-	my $fh = IO::File->new($self->filename, '<');
+	my $fh = IO::File->new($self->filename($size), '<');
 	return $fh;
 }
 
 sub public_url {
-	return '/_/img/u/'.($_[0]->imageid+0).'.'.$_[0]->format;
+	my ($self, $size) = @_;
+	$size ||= "m";
+	return '/_/img/u/'.($self->imageid+0).$size.'.'.$self->format;
 }
 
 1;
