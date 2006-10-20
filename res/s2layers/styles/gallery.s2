@@ -86,6 +86,7 @@ function ImagePage::print() {
 		    "<img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"' style='border : 0' />";
 		}
 		"</td>";
+	   "</tr><tr>";
 	    "<td>";
 
 	    if ($i.title) {
