@@ -41,19 +41,19 @@ function ThumbsPage::print() {
     """<table style="width:100%;" class="thumbslist"><tr>""";
 	var int row = 1;
     foreach var Image i ($.images) {
-	    "<td>";
-
+	    """<td style="vertical-align : top;">""";
 	    if ($i.url != "") {
+	    """<div class="thumbimage">""";
 		    "<a href='"+ehtml(string($i.id))+"/'><img src='"+ehtml($i.url)+"' width='"+ehtml(string($i.width))+"' height='"+ehtml(string($i.height))+"'  style='border : 0' /></a>";
+		"</div>";
 		}
-		"</td>";
-	    "<td>";
-
+	   """<div class="thumbinfo">""";
 	    if ($i.title) {
 		    "<h2 style='font-size:1.1em;font-weight:bold;'>"+ehtml($i.title)+"</h2>";
 	    }
-
-	    print $i.description+"</td>";
+	
+	    print $i.description;
+	    "</div></td>";
 		if($row == $*thumbs_per_page)
 			{
 				$row = 1;
